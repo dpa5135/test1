@@ -1,0 +1,12 @@
+response = llm(
+    prompt,
+    max_tokens=128,
+    temperature=0.1,
+    top_p=0.3,
+    top_k=20,
+    repeat_penalty=1.1,
+    mirostat_mode=2,
+    mirostat_tau=2.0,
+    mirostat_eta=0.1,
+    stop=["}"],  # stop right after JSON ends
+)
