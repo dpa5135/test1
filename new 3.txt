@@ -1,0 +1,249 @@
+import re
+import pandas as pd
+import numpy as np
+from itertools import combinations
+
+# =========================================================
+# NEGATION LIST
+# =========================================================
+NEGATIONS = [
+    r"\bnot\b", r"\bno\b", r"\bnever\b", r"\bdidn'?t\b", r"\bwasn'?t\b",
+    r"\baren'?t\b", r"\bhasn'?t\b", r"\bhaven'?t\b", r"\bdoesn'?t\b",
+    r"\bcouldn'?t\b", r"\bwithout\b"
+]
+
+# =========================================================
+# FACT PATTERN REGEX TEMPLATES (WITH 6 ILLEGAL ACTIVITY GROUPS)
+# =========================================================
+FACT_PATTERNS = {
+    # STRUCTURING
+    "structuring": [
+        r"multiple.{{0,{gap}}}cash.{{0,{gap}}}deposit(s)?",
+        r"structur(ed|ing|es)?.{{0,{gap}}}(deposit|transaction|activity|pattern)(s)?",
+        r"below.{{0,{gap}}}report(ing|ed)?.{{0,{gap}}}threshold(s)?",
+        r"split.{{0,{gap}}}(deposit|transaction)(s)?",
+        r"under.{{0,{gap}}}(10k|10000)",
+        r"frequent.{{0,{gap}}}small.{{0,{gap}}}deposit(s)?",
+        r"avoid.{{0,{gap}}}ctr",
+        r"aware.{{0,{gap}}}report(ing)?.{{0,{gap}}}(limit|threshold)"
+    ],
+
+    # FOREIGN TRANSFER
+    "foreign_transfer": [
+        r"(international|foreign).{{0,{gap}}}(wire|transfer)(s)?",
+        r"offshore.{{0,{gap}}}account(s)?",
+        r"cross.{{0,{gap}}}border.{{0,{gap}}}(transaction|transfer)(s)?",
+        r"foreign.{{0,{gap}}}beneficiar(y|ies)",
+        r"(fund|money|amount)(s)?.{{0,{gap}}}(sent|wired|transferred).{{0,{gap}}}(overseas|abroad)",
+        r"(receive|received|incoming).{{0,{gap}}}(fund|wire|transfer)(s)?.{{0,{gap}}}(foreign|international)"
+    ],
+
+    # UNKNOWN SOURCE OF FUNDS
+    "unknown_source": [
+        r"unknown.{{0,{gap}}}(origin|source)",
+        r"unexplained.{{0,{gap}}}(fund|transaction)(s)?",
+        r"unable.{{0,{gap}}}(provide|verify).{{0,{gap}}}(document|info)(s|ation)?",
+        r"customer.{{0,{gap}}}could.{{0,{gap}}}not.{{0,{gap}}}explain",
+        r"source.{{0,{gap}}}of.{{0,{gap}}}fund(s)?.{{0,{gap}}}(unclear|unknown|unverifiable)",
+        r"no.{{0,{gap}}}(support|supporting).{{0,{gap}}}document(s)?",
+        r"activity.{{0,{gap}}}inconsistent.{{0,{gap}}}(occupation|employment)",
+        r"no.{{0,{gap}}}legitimate.{{0,{gap}}}(reason|purpose)"
+    ],
+
+    # THIRD-PARTY ACTIVITY
+    "third_party": [
+        r"third.{{0,{gap}}}part(y|ies)",
+        r"fund(s)?.{{0,{gap}}}from.{{0,{gap}}}unrelated.{{0,{gap}}}(account|entity)(s)?",
+        r"acting.{{0,{gap}}}on.{{0,{gap}}}behalf.{{0,{gap}}}(of|for)",
+        r"(money|fund)(s)?.{{0,{gap}}}transfer(red|ring)?.{{0,{gap}}}to.{{0,{gap}}}unrelated",
+        r"account.{{0,{gap}}}used.{{0,{gap}}}for.{{0,{gap}}}another.{{0,{gap}}}(person|individual|entity)",
+        r"deposit.{{0,{gap}}}made.{{0,{gap}}}by.{{0,{gap}}}(different|unknown).{{0,{gap}}}(person|individual)"
+    ],
+
+    # RAPID MOVEMENT
+    "rapid_movement": [
+        r"(immediate|same.{{0,{gap}}}day).{{0,{gap}}}(withdrawal|transfer)(s)?",
+        r"rapid.{{0,{gap}}}(inflow|outflow)",
+        r"fund(s)?.{{0,{gap}}}(moved|transferred).{{0,{gap}}}(shortly|quickly)",
+        r"(zero|near).{{0,{gap}}}balance.{{0,{gap}}}(maintain|kept)",
+        r"quick.{{0,{gap}}}movement.{{0,{gap}}}of.{{0,{gap}}}fund(s)?",
+        r"(back.{{0,{gap}}}to.{{0,{gap}}}back).{{0,{gap}}}(transaction|transfer)(s)?"
+    ],
+
+    # CUSTOMER BEHAVIOR
+    "customer_behavior": [
+        r"customer.{{0,{gap}}}(appear|seem)(ed)?.{{0,{gap}}}(nervous|anxious)",
+        r"(reluctant|refused|unwilling).{{0,{gap}}}to.{{0,{gap}}}(provide|share|discuss).{{0,{gap}}}(info|information|details)?",
+        r"(became|appeared).{{0,{gap}}}(defensive|agitated|evasive)",
+        r"avoid(ed|ing).{{0,{gap}}}(question|eye contact)",
+        r"request(ed)?.{{0,{gap}}}to.{{0,{gap}}}split.{{0,{gap}}}(transaction|deposit)(s)?"
+    ],
+
+    # FINANCIAL & CORPORATE CRIMES
+    "financial_corporate_crimes": [
+        r"embezzl(ement|er|ers|ed)?",
+        r"fraud(ulent|ulently)?",
+        r"insider.{{0,{gap}}}trading",
+        r"tax.{{0,{gap}}}evasion",
+        r"kickback(s)?",
+        r"tax.{{0,{gap}}}shelter(s)?.{{0,{gap}}}(illegal|unlawful)?",
+        r"counterfeit(ing|ed|s)?",
+        r"racketeer(ing)?",
+        r"ghost.{{0,{gap}}}employee(s)?",
+        r"asset.{{0,{gap}}}stripp(ing|ed)?",
+        r"phantom.{{0,{gap}}}vendor(s)?",
+        r"fake.{{0,{gap}}}invoice(s)?",
+        r"invoice.{{0,{gap}}}factor(ing|ed|ers)?",
+        r"loan[- ]?back.{{0,{gap}}}(scheme|arrangement)(s)?",
+        r"round[- ]?tripp(ing|ed|er|ers)?"
+    ],
+
+    # TRADE-BASED & BUSINESS FRONTS
+    "trade_based_fronts": [
+        r"trade[- ]?based.{{0,{gap}}}money.{{0,{gap}}}launder(ing|ed|er|ers)?",
+        r"mis[- ]?invoic(ing|ed|es)?",
+        r"(over|under).{{0,{gap}}}invoic(ing|ed|es)?",
+        r"shell.{{0,{gap}}}compan(y|ies)",
+        r"front.{{0,{gap}}}compan(y|ies)",
+        r"nominee.{{0,{gap}}}director(s)?",
+        r"hawala"
+    ],
+
+    # ORGANIZED & VIOLENT CRIMES
+    "organized_violent_crimes": [
+        r"drug(s| deal(ing)?)",
+        r"human.{{0,{gap}}}traffick(ing|er|ers|ed)?",
+        r"arms.{{0,{gap}}}traffick(ing|er|ers|ed)?",
+        r"smuggl(ing|er|ers|ed)?",
+        r"extort(ion|ed|ing)?",
+        r"brib(ery|e|es|ed|ing)?",
+        r"corrupt(ion|ed|ive)?",
+        r"organize(d)?.{{0,{gap}}}crime",
+        r"prostitut(ion|e|es|ed|ing)",
+        r"bootlegg(ing|ed|er|ers)?"
+    ],
+
+    # CYBER & TECH CRIMES
+    "cyber_tech_crimes": [
+        r"cyber.?crime",
+        r"identity.{{0,{gap}}}theft",
+        r"money.{{0,{gap}}}mule(s)?",
+        r"online.{{0,{gap}}}(fraud|scam|scheme)(s)?",
+        r"crypto(currency|coin)?.{{0,{gap}}}(manipulation|scam|fraud)"
+    ],
+
+    # STRUCTURING & CONCEALMENT
+    "structuring_concealment": [
+        r"structur(ing|ed|es)?",
+        r"smurf(ing| account(s)?)",
+        r"bulk.{{0,{gap}}}cash.{{0,{gap}}}smuggl(ing|er|ers)?",
+        r"layer(ing|ed|s)?.{{0,{gap}}}(transaction|transfer)(s)?",
+        r"offshore.{{0,{gap}}}account(s)?",
+        r"cash[- ]?intensive.{{0,{gap}}}(business|company|entity)"
+    ],
+
+    # TERRORISM & ILLICIT NETWORKS
+    "terrorism_illicit_networks": [
+        r"terror(ism|ist|ist(s)?)",
+        r"terror.{{0,{gap}}}financ(ing|e|ed|es)?",
+        r"pep(s)?",
+        r"politically.{{0,{gap}}}expos(ed|e)?.{{0,{gap}}}person(s)?",
+        r"charit(y|ies).{{0,{gap}}}(used|use).{{0,{gap}}}(illicit|fund|financ(ing|e))"
+    ]
+}
+
+# =========================================================
+# NEGATION CHECK
+# =========================================================
+def has_negation_nearby(text, match_start, window=40):
+    start_idx = max(0, match_start - window)
+    context = text[start_idx:match_start].lower()
+    return any(re.search(neg, context) for neg in NEGATIONS)
+
+# =========================================================
+# DETECTION WITH DIRECT & CONTEXT MATCHES
+# =========================================================
+def detect_fact_patterns(text, fact_patterns=FACT_PATTERNS, max_gap=10, context_span=100):
+    """
+    Detect AML patterns → Yes/No + DirectMatch + ContextMatch
+    """
+    text = str(text)
+    lower_text = text.lower()
+
+    results, direct_matches, context_matches = {}, {}, {}
+
+    formatted_patterns = {
+        theme: [pat.format(gap=max_gap) for pat in pats]
+        for theme, pats in fact_patterns.items()
+    }
+
+    for theme, patterns in formatted_patterns.items():
+        found, direct_list, context_list = False, [], []
+        for pat in patterns:
+            for m in re.finditer(pat, lower_text, re.IGNORECASE):
+                if has_negation_nearby(lower_text, m.start()):
+                    continue
+                found = True
+                match_text = text[m.start():m.end()]
+                direct_list.append(match_text)
+                start, end = max(0, m.start() - context_span), min(len(text), m.end() + context_span)
+                context_list.append(text[start:end])
+        results[theme] = "Yes" if found else "No"
+        direct_matches[f"direct_match_{theme}"] = direct_list
+        context_matches[f"context_match_{theme}"] = context_list
+
+    return {**results, **direct_matches, **context_matches}
+
+# =========================================================
+# CO-OCCURRENCE ANALYSIS (Yes/No)
+# =========================================================
+def cooccurrence_investigation_rate_overall(df, pattern_cols, target_col='investigated', combo_size=2):
+    df_num = df.copy()
+    for c in pattern_cols:
+        if df_num[c].dtype == object:
+            df_num[c] = df_num[c].str.lower().map({'yes': 1, 'no': 0})
+    total_records = len(df_num)
+    results = []
+    for combo in combinations(pattern_cols, combo_size):
+        mask = df_num[list(combo)].all(axis=1)
+        subset = df_num[mask]
+        investigated_count = subset[target_col].sum()
+        total_occurrences = len(subset)
+        rate = investigated_count / total_records if total_records > 0 else 0
+        results.append({
+            'patterns': ' + '.join(combo),
+            'total_occurrences': total_occurrences,
+            'investigated_with_combo': investigated_count,
+            'investigation_rate_overall': round(rate, 4)
+        })
+    return pd.DataFrame(results).sort_values('investigation_rate_overall', ascending=False).reset_index(drop=True)
+
+# =========================================================
+# EXAMPLE USAGE
+# =========================================================
+data = {
+    "UTR_text": [
+        "XXXXXXXXXXXXXXXXXXX",
+        "YYYYYYYYYYYYYYYYYYY",
+        "rrrrrrrrrrrrrrrrrtttt"
+    ],
+    "investigated": [1, 1, 0]
+}
+df = pd.DataFrame(data)
+
+# Run pattern detection
+df["patterns"] = df["UTR_text"].apply(lambda x: detect_fact_patterns(x, max_gap=8))
+expanded = pd.json_normalize(df["patterns"])
+df = pd.concat([df, expanded], axis=1)
+
+# Co-occurrence computation
+pattern_cols = [c for c in expanded.columns if not c.startswith(('direct_', 'context_'))]
+pair_rates = cooccurrence_investigation_rate_overall(df, pattern_cols, combo_size=2)
+
+# Display sample results
+print("\n=== DETECTED PATTERNS (Yes/No) ===")
+print(df[["UTR_text"] + pattern_cols[:8]])   # first 8 themes for brevity
+print("\n=== SAMPLE DIRECT & CONTEXT MATCHES ===")
+print(df[["UTR_text", "direct_match_financial_corporate_crimes", "context_match_financial_corporate_crimes"]])
+print("\n=== GLOBAL INVESTIGATION RATES ===")
+print(pair_rates.head(10))
