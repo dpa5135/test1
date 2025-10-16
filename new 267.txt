@@ -1,0 +1,168 @@
+def get_keyword_alignment(utr_text, siu_text):
+    prompt = f"""
+You are an Anti-Money Laundering (AML) text analysis expert.
+
+Your task is to carefully compare two texts:
+1. The Unusual Transaction Report (UTR) written by a bank teller.
+2. The Special Investigation Unit (SIU) investigation report about the same case.
+
+Identify which specific keywords, phrases, or concepts **from the UTR text** were discussed, referenced, or analyzed in the SIU report.
+
+⚠️ CRITICAL RULES:
+1. Only extract words or short phrases that actually appear in the UTR text.
+2. Do NOT invent or paraphrase. If the SIU report refers to an idea not explicitly in the UTR, ignore it.
+3. Output only the exact UTR keywords or phrases that were mentioned or semantically matched in the SIU text.
+4. Respond ONLY in the JSON format below.
+
+Output format (JSON):
+{{
+  "matched_keywords": ["<keyword1>", "<keyword2>", "<keyword3>"]
+}}
+
+UTR text:
+{utr_text}
+
+SIU text:
+{siu_text}
+
+Now return ONLY the JSON output.
+"""
+    response = llm(prompt, max_tokens=128, temperature=0.0, top_p=0.3, top_k=20, stop=["}"])
+    return response["choices"][0]["text"].strip()
+
+
+
+------------------------------
+
+
+from sentence_transformers import SentenceTransformer, util
+import pandas as pd
+
+# Load a good general-purpose embedding model
+model = SentenceTransformer("all-MiniLM-L6-v2")  # light & fast
+
+# Example UTR and SIU texts
+utr_text = "Customer deposited $9,000 three times this week at different branches."
+siu_text = "The investigation found multiple deposits just below the reporting limit, which appear structured."
+
+# Split UTR into small segments (could be phrases or simple n-grams)
+utr_phrases = [
+    "Customer deposited $9,000",
+    "three times",
+    "this week",
+    "different branches"
+]
+
+# Encode embeddings
+utr_embeds = model.encode(utr_phrases, convert_to_tensor=True)
+siu_embed = model.encode(siu_text, convert_to_tensor=True)
+
+# Compute cosine similarity
+cosine_scores = util.cos_sim(utr_embeds, siu_embed)
+
+# Filter by threshold
+threshold = 0.6
+matches = [utr_phrases[i] for i in range(len(utr_phrases)) if cosine_scores[i] > threshold]
+
+print("Matched keywords:", matches)
+
+
+------------------
+
+from tqdm import tqdm
+
+def get_matched_phrases(utr, siu):
+    utr_phrases = utr.split(". ")  # simple sentence split
+    utr_embeds = model.encode(utr_phrases, convert_to_tensor=True)
+    siu_embed = model.encode(siu, convert_to_tensor=True)
+    cosine_scores = util.cos_sim(utr_embeds, siu_embed)
+    threshold = 0.65
+    matches = [utr_phrases[i] for i in range(len(utr_phrases)) if cosine_scores[i] > threshold]
+    return matches
+
+df["Matched_Keywords"] = df.apply(lambda x: get_matched_phrases(x["UTR_Text"], x["SIU_Text"]), axis=1)
+
+------------------------------
+
+def get_matched_phrases(utr_text, siu_text):
+    prompt = f"""
+You are an Anti-Money Laundering (AML) text alignment analyst.
+
+You will be given two texts describing the same case:
+1. The Unusual Transaction Report (UTR) written by a bank teller.
+2. The Special Investigation Unit (SIU) report written after investigation.
+
+Your goal:
+Identify which **phrases** (not single words) from the UTR text were referenced, discussed, or analyzed in the SIU report.
+
+⚠️ STRICT RULES:
+1. Only extract phrases that actually appear in the UTR text (verbatim or nearly verbatim).
+2. Each phrase should be between **2 and 8 words** long.
+3. Do NOT invent, paraphrase, or generalize.
+4. If there is **no overlap at all**, respond exactly as:
+   {{"matched_phrases": [], "note": "No phrases from the UTR text are mentioned or referenced in the SIU report."}}
+5. Otherwise, respond in this format:
+   {{"matched_phrases": ["<phrase1>", "<phrase2>", "<phrase3>"]}}
+6. Do NOT add explanations, comments, markdown, or any text outside the JSON.
+
+UTR Text:
+{utr_text}
+
+SIU Text:
+{siu_text}
+
+Now return ONLY the JSON output:
+"""
+    response = llm(
+        prompt,
+        max_tokens=256,
+        temperature=0.0,
+        top_p=0.3,
+        top_k=20,
+        stop=["}"]
+    )
+    return response["choices"][0]["text"].strip()
+
+-----------------------------
+
+def get_linked_phrases(utr_text, siu_text):
+    prompt = f"""
+You are an Anti-Money Laundering (AML) text alignment analyst.
+
+You will be given two texts describing the same case:
+1. The Unusual Transaction Report (UTR) written by a bank teller.
+2. The Special Investigation Unit (SIU) report written after investigation.
+
+Your goal:
+Identify what **phrases or sentences in the UTR text** are linked between the UTR text and the SIU text.
+A phrase or sentence is considered "linked" if the same activity, behavior, or fact is mentioned, discussed, or analyzed in the SIU report.
+
+⚠️ STRICT RULES:
+1. Only extract phrases or sentences that actually appear in the UTR text (verbatim or nearly verbatim).
+2. Do NOT invent, paraphrase, or generalize.
+3. Each extracted phrase or sentence must come directly from the UTR text.
+4. If the SIU report uses different wording for the same meaning, extract the **original wording from the UTR text**.
+5. Each extracted unit should be meaningful (typically 2–20 words long).
+6. If there are **no overlaps or linked parts**, respond exactly as:
+   {{"linked_phrases": [], "note": "No phrases or sentences from the UTR text are mentioned or referenced in the SIU report."}}
+7. Otherwise, respond in this format:
+   {{"linked_phrases": ["<phrase or sentence 1>", "<phrase or sentence 2>"]}}
+8. Do NOT include explanations, markdown, or any other text outside the JSON output.
+
+UTR Text:
+{utr_text}
+
+SIU Text:
+{siu_text}
+
+Now return ONLY the JSON output:
+"""
+    response = llm(
+        prompt,
+        max_tokens=256,
+        temperature=0.0,
+        top_p=0.3,
+        top_k=20,
+        stop=["}"]
+    )
+    return response["choices"][0]["text"].strip()
