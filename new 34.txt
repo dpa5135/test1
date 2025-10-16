@@ -1,0 +1,21 @@
+"utr_reporting_references": [
+    # UTR / Unusual Transaction / Activity Report variations
+    r"\b(utr|unusual.{{0,{gap}}}(transaction|activity).{{0,{gap}}}(report|referral|case|alert)(s)?)\b",
+    r"\bunusual.{{0,{gap}}}(activity|transaction)(s)?\b",
+    r"\b(unusual|suspicious).{{0,{gap}}}(report|case|alert)(s)?\b",
+    r"\b(report|case|alert).{{0,{gap}}}(of|for).{{0,{gap}}}(unusual|suspicious).{{0,{gap}}}(activity|transaction)(s)?\b",
+
+    # Referrals and escalations
+    r"\b(referr(ed|al|als|ing)?).{{0,{gap}}}(by|from|through).{{0,{gap}}}(bank|branch|teller|staff|personnel|employee)(s)?\b",
+    r"\b(escalat(ed|ion|ing)?).{{0,{gap}}}(to|by).{{0,{gap}}}(aml|compliance|siu|bsa|risk).{{0,{gap}}}(team|unit|officer|department)?\b",
+
+    # Mentions of teller / bank staff involvement
+    r"\b(bank|branch).{{0,{gap}}}(personnel|staff|employee|associate|representative)(s)?\b",
+    r"\b(teller|banker|branch.{{0,{gap}}}staff|front[- ]?line.{{0,{gap}}}(employee|associate))(s)?\b",
+    r"\b(file(d|ing)?).{{0,{gap}}}(by|through).{{0,{gap}}}(teller|bank|branch|staff|personnel|employee)(s)?\b",
+
+    # Mentions of internal reporting or documentation
+    r"\b(internal|manual|branch).{{0,{gap}}}(report|form|referral|write[- ]?up)(s)?\b",
+    r"\b(sar|suspicious.{{0,{gap}}}activity.{{0,{gap}}}report)(s)?\b",
+    r"\b(bsa|aml).{{0,{gap}}}(alert|case|referral)(s)?\b"
+]
