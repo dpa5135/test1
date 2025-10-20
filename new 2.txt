@@ -1,5 +1,22 @@
 import aspose.pdf as ap
-print([attr for attr in dir(ap.ExcelSaveOptions) if not attr.startswith("_")])
+
+pdf_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\[UTR] - ANTOINETTE SAINTVAL.pdf"
+excel_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\output_single_sheet.xlsx"
+
+# Load the PDF document
+doc = ap.Document(pdf_path)
+
+# --- Configure Excel save options ---
+options = ap.ExcelSaveOptions()
+options.uniform_worksheets = True
+options.minimize_the_number_of_worksheets = True  # ✅ merge all PDF pages into one sheet
+options.format = ap.ExcelSaveOptions.ExcelFormat.XLSX  # ✅ export to XLSX format
+
+# --- Save ---
+doc.save(excel_path, options)
+
+print("✅ PDF successfully converted into a single-sheet Excel file!")
+
 
 
 
