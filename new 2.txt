@@ -1,24 +1,11 @@
-import aspose.pdf as ap
+import aspose.cells as cells
 
 pdf_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\[UTR] - ANTOINETTE SAINTVAL.pdf"
-excel_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\output_single_sheet.xlsx"
+excel_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\output_restored.xlsx"
 
-# Load the PDF document
-doc = ap.Document(pdf_path)
+# Use Cells API instead of PDF API
+load_opts = cells.PdfLoadOptions()
+wb = cells.Workbook(pdf_path, load_opts)
+wb.save(excel_path, cells.SaveFormat.XLSX)
 
-# --- Configure Excel save options ---
-options = ap.ExcelSaveOptions()
-options.uniform_worksheets = True
-options.minimize_the_number_of_worksheets = True  # ✅ merge all PDF pages into one sheet
-options.format = ap.ExcelSaveOptions.ExcelFormat.XLSX  # ✅ export to XLSX format
-
-# --- Save ---
-doc.save(excel_path, options)
-
-print("✅ PDF successfully converted into a single-sheet Excel file!")
-
-
-
-
-
-
+print("✅ Reconstructed Excel file successfully from Excel-generated PDF!")
