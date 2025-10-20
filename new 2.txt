@@ -1,18 +1,23 @@
 import aspose.pdf as ap
 
-pdf_path = r"C:\path\to\input.pdf"
-excel_path = r"C:\path\to\output.xlsx"
+pdf_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\[UTR] - ANTOINETTE SAINTVAL.pdf"
+excel_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\output_single_sheet.xlsx"
 
+# Load the PDF document
 doc = ap.Document(pdf_path)
 
-# --- Excel save options ---
+# --- Configure Excel save options ---
 options = ap.ExcelSaveOptions()
-options.merge_adjacent_cells = True       # Merge visually continuous cells
-options.minimize_the_number_of_worksheets = True  # ✅ key setting (keeps all pages in ONE sheet)
+options.merge_adjacent_cells = True
+options.minimize_the_number_of_worksheets = True   # ✅ Merge all PDF pages into one worksheet
+
+# ✅ Set export format correctly for your version
 options.format = ap.ExcelSaveOptions.ExcelFormat.XLSX
 
 # --- Save ---
 doc.save(excel_path, options)
-print("✅ PDF converted to single-sheet Excel file successfully!")
+
+print("✅ PDF successfully converted to a single-sheet Excel file!")
+
 
 
