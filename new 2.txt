@@ -1,57 +1,49 @@
 import os
 import pandas as pd
-import tabula
-from openpyxl import load_workbook
+import re
 
 # === CONFIGURATION ===
-pdf_folder = r"D:\Path\To\Your\PDFs"   # 🔸 Update this to your folder
-converted_folder = r"D:\Path\To\ConvertedExcels"
-output_file = "activity_summary_results.xlsx"
-
-os.makedirs(converted_folder, exist_ok=True)
+csv_folder = r"D:\Path\To\ConvertedCSVs"   # Folder containing CSVs converted from PDFs
+output_file = "activity_summary_from_csvs.xlsx"
 
 results = []
 
-for file in os.listdir(pdf_folder):
-    if not file.lower().endswith(".pdf"):
-        continue
-
-    pdf_path = os.path.join(pdf_folder, file)
-    print(f"Processing: {file}")
-
-    csv_output = os.path.join(converted_folder, file.replace(".pdf", ".csv"))
-    excel_output = os.path.join(converted_folder, file.replace(".pdf", ".xlsx"))
-
+# === FUNCTION: Extract summary text ===
+def extract_summary_from_csv(csv_path):
     try:
-        # Step 1 — Convert PDF to CSV (Tabula supports this)
-        tabula.convert_into(pdf_path, csv_output, output_format="csv", pages="all")
-        print(f"  ✅ Converted to CSV: {csv_output}")
+        # Read CSV, ignore bad lines if structure isn't perfect
+        df = pd.read_csv(csv_path, header=None, dtype=str, on_bad_lines="skip").fillna("")
 
-        # Step 2 — Convert CSV → Excel
-        df_csv = pd.read_csv(csv_output)
-        df_csv.to_excel(excel_output, index=False)
+        # Flatten everything into a list of strings (row by row)
+        flat_values = [str(cell).strip() for row in df.values for cell in row if str(cell).strip() != ""]
 
-        # Step 3 — Extract values from C39:I41 range
-        wb = load_workbook(excel_output, data_only=True)
-        ws = wb.active
-
-        text_values = []
-        for row in ws.iter_rows(min_row=39, max_row=41, min_col=3, max_col=9):
-            for cell in row:
-                if cell.value:
-                    text_values.append(str(cell.value))
-
-        summary = " ".join(text_values).strip() if text_values else "Not found"
+        # Search for the label and take next non-empty line as the summary
+        for i, val in enumerate(flat_values):
+            if re.search(r"\bsummary\s+of\s+activity\b", val, flags=re.IGNORECASE):
+                # Get next non-empty string (if any)
+                for j in range(i + 1, len(flat_values)):
+                    nxt = flat_values[j].strip()
+                    if nxt:
+                        return nxt
+        return "Not found"
 
     except Exception as e:
-        summary = f"Error: {e}"
+        return f"Error: {e}"
 
+# === MAIN LOOP ===
+for file in os.listdir(csv_folder):
+    if not file.lower().endswith(".csv"):
+        continue
+
+    csv_path = os.path.join(csv_folder, file)
+    print(f"Processing: {file}")
+    summary = extract_summary_from_csv(csv_path)
     results.append({
-        "PDF_File_Name": file,
+        "CSV_File_Name": file,
         "Activity_Summary": summary
     })
 
-# === Step 4 — Save results ===
+# === SAVE RESULTS ===
 df = pd.DataFrame(results)
 df.to_excel(output_file, index=False)
 print(f"\n✅ Extraction complete! Results saved to {output_file}")
