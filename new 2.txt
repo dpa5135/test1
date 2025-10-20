@@ -1,3 +1,0 @@
-!"C:\Program Files\Python311\python.exe" -m pip install --target="C:\Program Files\Python311\Lib\site-packages" aspose-cells
-
-
