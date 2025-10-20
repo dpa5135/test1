@@ -1,11 +1,3 @@
-import aspose.cells as cells
+!"C:\Program Files\Python311\python.exe" -m pip install --target="C:\Program Files\Python311\Lib\site-packages" aspose-cells
 
-pdf_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\[UTR] - ANTOINETTE SAINTVAL.pdf"
-excel_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\output_restored.xlsx"
 
-# Use Cells API instead of PDF API
-load_opts = cells.PdfLoadOptions()
-wb = cells.Workbook(pdf_path, load_opts)
-wb.save(excel_path, cells.SaveFormat.XLSX)
-
-print("✅ Reconstructed Excel file successfully from Excel-generated PDF!")
