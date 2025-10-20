@@ -1,81 +1,109 @@
 import os
 import re
 import io
-import pandas as pd
 import fitz  # PyMuPDF
-import aspose.pdf as ap
+import pandas as pd
 from openpyxl import load_workbook
-from PyPDF2 import PdfReader
 
 # === CONFIGURATION ===
 pdf_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
-converted_folder = os.path.join(pdf_folder, "converted_excels")
-output_file = os.path.join(pdf_folder, "activity_summary_results_unified.xlsx")
-os.makedirs(converted_folder, exist_ok=True)
+output_file = os.path.join(pdf_folder, "activity_summary_results_FINAL.xlsx")
+
+# Regex pattern for “Summary of Activity”
+SUMMARY_LABEL = re.compile(r"\bsummary\s*of\s*activity\b", re.IGNORECASE)
 
 
-# === STEP 1: Try extracting embedded Excel (email PDFs) ===
+# === FUNCTION 1: Extract embedded Excel (for PDFs with attachments) ===
 def extract_embedded_excel(pdf_path):
+    """
+    Extracts embedded Excel files from PDFs (like email attachments).
+    Returns: (excel_bytes, filename) or (None, None)
+    """
     try:
         with fitz.open(pdf_path) as doc:
+            # Try built-in attachments API
+            try:
+                for att in doc.attachments():
+                    name = att.get("filename", "")
+                    if name.lower().endswith(".xlsx"):
+                        return att["filedata"], name
+            except Exception:
+                pass
+
+            # Fallback: manually scan xrefs
             for xref in range(1, doc.xref_length()):
-                obj = doc.xref_object(xref)
-                if ".xlsx" in obj:
-                    data = doc.xref_stream(xref)
-                    name_match = re.search(r"/F\s*\(([^)]+\.xlsx)\)", obj)
-                    name = name_match.group(1) if name_match else "embedded.xlsx"
-                    return data, name
-    except Exception:
-        pass
+                try:
+                    obj = doc.xref_object(xref)
+                    if ".xlsx" in obj:
+                        match = re.search(r"/F\s*\(([^)]+\.xlsx)\)", obj)
+                        data = doc.xref_stream(xref)
+                        if data:
+                            filename = match.group(1) if match else "embedded.xlsx"
+                            return data, filename
+                except Exception:
+                    continue
+    except Exception as e:
+        print(f"⚠️ Attachment scan failed for {pdf_path}: {e}")
     return None, None
 
 
-# === STEP 2: Convert PDF → Excel (Aspose) ===
-def convert_pdf_to_excel(pdf_path, excel_path):
+# === FUNCTION 2: Extract Summary from Excel File ===
+def extract_summary_from_excel_bytes(excel_bytes):
+    """
+    Reads the Excel binary stream and extracts text below 'Summary of Activity'
+    """
     try:
-        doc = ap.Document(pdf_path)
-        doc.save(excel_path, ap.SaveFormat.EXCEL)
-        return True
-    except Exception as e:
-        print(f"❌ Failed to convert {os.path.basename(pdf_path)}: {e}")
-        return False
-
-
-# === STEP 3: Extract Summary of Activity from Excel ===
-def extract_summary_from_excel(excel_path):
-    try:
-        wb = load_workbook(excel_path, data_only=True)
+        wb = load_workbook(io.BytesIO(excel_bytes), data_only=True)
         ws = wb.active
+
         for row in ws.iter_rows():
             for cell in row:
                 val = str(cell.value).strip() if cell.value else ""
-                if re.search(r"\bSummary\s*of\s*Activity\b", val, re.IGNORECASE):
+                if SUMMARY_LABEL.search(val):
                     below_row = cell.row + 1
                     for offset in range(0, 8):
-                        next_val = ws.cell(row=below_row + offset, column=cell.column).value
-                        if next_val:
-                            return str(next_val).strip()
+                        nxt = ws.cell(row=below_row + offset, column=cell.column).value
+                        if nxt:
+                            return str(nxt).strip()
         return "Not found"
     except Exception as e:
         return f"Error reading Excel: {e}"
 
 
-# === STEP 4: Fallback — Extract directly from PDF text ===
+# === FUNCTION 3: Extract Summary directly from PDF text ===
 def extract_summary_from_pdf_text(pdf_path):
+    """
+    Reads visible text in PDFs saved from Excel or scanned reports.
+    Looks for 'Summary of Activity' and returns the text that follows.
+    """
     try:
-        reader = PdfReader(pdf_path)
-        text = ""
-        for page in reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text + " "
-        match = re.search(r"Summary\s*of\s*Activity[:\s\-]*(.*)", text, re.IGNORECASE)
-        return match.group(1).strip() if match else "Not found"
+        with fitz.open(pdf_path) as doc:
+            for page in doc:
+                blocks = page.get_text("blocks")
+                blocks.sort(key=lambda b: (round(b[1], 1), round(b[0], 1)))  # top-to-bottom order
+
+                for i, b in enumerate(blocks):
+                    text = (b[4] or "").strip()
+                    if not text:
+                        continue
+
+                    # Look for header
+                    if SUMMARY_LABEL.search(text):
+                        after = SUMMARY_LABEL.split(text, 1)[-1].strip(" :-\n\t")
+                        if after:
+                            return after.strip()
+
+                        # Otherwise, read the next text block
+                        for j in range(i + 1, min(i + 5, len(blocks))):
+                            nxt = (blocks[j][4] or "").strip()
+                            if nxt:
+                                return nxt.splitlines()[0].strip()
+        return "Not found"
     except Exception as e:
         return f"Error reading PDF: {e}"
 
 
-# === STEP 5: Main Process ===
+# === MAIN PROCESS ===
 results = []
 
 for file in os.listdir(pdf_folder):
@@ -84,29 +112,18 @@ for file in os.listdir(pdf_folder):
 
     pdf_path = os.path.join(pdf_folder, file)
     print(f"\n📄 Processing: {file}")
+
     summary = None
 
-    # 1️⃣ Try extracting embedded Excel
+    # Step 1️⃣ Try to extract embedded Excel
     excel_bytes, excel_name = extract_embedded_excel(pdf_path)
     if excel_bytes:
-        embedded_path = os.path.join(converted_folder, f"embedded_{excel_name}")
-        with open(embedded_path, "wb") as f:
-            f.write(excel_bytes)
         print(f"🧩 Found embedded Excel: {excel_name}")
-        summary = extract_summary_from_excel(embedded_path)
+        summary = extract_summary_from_excel_bytes(excel_bytes)
 
-    # 2️⃣ Otherwise, convert PDF → Excel (Aspose)
-    if not excel_bytes:
-        excel_path = os.path.join(converted_folder, file.replace(".pdf", ".xlsx"))
-        if convert_pdf_to_excel(pdf_path, excel_path):
-            print(f"✅ Converted to Excel: {excel_path}")
-            summary = extract_summary_from_excel(excel_path)
-        else:
-            summary = "Conversion failed"
-
-    # 3️⃣ If nothing found, fallback to text extraction
-    if not summary or summary.strip() in ["Not found", "Conversion failed"]:
-        print("🔍 Falling back to text extraction...")
+    # Step 2️⃣ If no Excel found, extract directly from PDF text
+    if not summary or summary.strip() in ["", "Not found"] or summary.startswith("Error"):
+        print("🔍 Extracting directly from PDF text...")
         summary = extract_summary_from_pdf_text(pdf_path)
 
     results.append({"PDF_File_Name": file, "Activity_Summary": summary})
@@ -115,4 +132,4 @@ for file in os.listdir(pdf_folder):
 # === SAVE RESULTS ===
 df = pd.DataFrame(results)
 df.to_excel(output_file, index=False)
-print(f"\n✅ Extraction complete! Results saved to: {output_file}")
+print(f"\n✅ Extraction complete! Clean results saved to: {output_file}")
