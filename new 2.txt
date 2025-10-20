@@ -1,0 +1,89 @@
+import os
+import re
+import pandas as pd
+from PyPDF2 import PdfReader
+from openpyxl import load_workbook
+import io
+import fitz  # PyMuPDF
+
+# === CONFIGURATION ===
+pdf_folder = r"D:\Path\To\Your\PDFs"  # Change this to your actual folder
+output_file = "activity_summary_results.xlsx"
+
+def extract_embedded_excel(pdf_path):
+    """
+    Extracts embedded Excel (.xlsx) attachments from the PDF.
+    Returns the binary content of the first Excel attachment, or None if not found.
+    """
+    with fitz.open(pdf_path) as doc:
+        for attachment in doc.attachments():
+            name = attachment["filename"]
+            if name.lower().endswith(".xlsx") and name.lower().startswith("utr"):
+                print(f"  Found embedded Excel: {name}")
+                return attachment["filedata"]
+    return None
+
+def extract_summary_from_excel_bytes(excel_bytes):
+    """
+    Reads in-memory Excel binary and extracts merged text from C39:I41.
+    """
+    try:
+        wb = load_workbook(io.BytesIO(excel_bytes), data_only=True)
+        ws = wb.active
+        text_values = []
+        for row in ws.iter_rows(min_row=39, max_row=41, min_col=3, max_col=9):
+            for cell in row:
+                if cell.value:
+                    text_values.append(str(cell.value))
+        return " ".join(text_values).strip()
+    except Exception as e:
+        return f"Error reading Excel: {e}"
+
+def extract_summary_from_pdf_text(pdf_path):
+    """
+    Extracts summary phrases directly from PDF text.
+    """
+    try:
+        reader = PdfReader(pdf_path)
+        text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + " "
+        match = re.search(r"(Account\s+Closeout|Summary\s+of\s+Activity[:\-]?\s*.+)", text, re.IGNORECASE)
+        if match:
+            return match.group(0).strip()
+        return None
+    except Exception as e:
+        return f"Error reading PDF text: {e}"
+
+# === MAIN LOGIC ===
+results = []
+
+for file in os.listdir(pdf_folder):
+    if file.lower().endswith(".pdf"):
+        pdf_path = os.path.join(pdf_folder, file)
+        print(f"Processing: {file}")
+
+        summary = None
+        # Step 1: Try to extract Excel attachment
+        excel_bytes = extract_embedded_excel(pdf_path)
+        if excel_bytes:
+            summary = extract_summary_from_excel_bytes(excel_bytes)
+
+        # Step 2: Fallback — try to extract from PDF text itself
+        if not summary or summary.strip() == "" or summary.startswith("Error"):
+            pdf_summary = extract_summary_from_pdf_text(pdf_path)
+            if pdf_summary:
+                summary = pdf_summary
+
+        # Step 3: Default if not found
+        if not summary or summary.strip() == "":
+            summary = "Not found"
+
+        results.append({"PDF_File_Name": file, "Activity_Summary": summary})
+
+# === SAVE OUTPUT ===
+df = pd.DataFrame(results)
+df.to_excel(output_file, index=False)
+print(f"\n✅ Extraction complete! Results saved to {output_file}")
