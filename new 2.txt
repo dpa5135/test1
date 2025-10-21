@@ -1,41 +1,91 @@
+from __future__ import annotations
+import re
+from typing import Iterable, List
+import pypdfium2 as pdfium
 import pdfplumber
 import pandas as pd
-import os
+from pathlib import Path
 
-pdf_path = r"C:\path\to\your\file.pdf"
-output_excel = r"C:\path\to\output.xlsx"
+PDFTEXT_FLAGS = (
+    pdfium.PDFTEXT_EXCLUDE_INVISIBLE                # ignore hidden text layers
+    | pdfium.PDFTEXT_NO_DUPLICATE_SPACE             # normalize spaces
+    | pdfium.PDFTEXT_NO_LIGATURES                   # expand ligatures → "fi" not ﬁ
+    | pdfium.PDFTEXT_REMOVE_CONTROL_CHARS           # strip stray controls
+)
 
-rows = []
+def read_pdf_text_pdfium(pdf_path: str | Path) -> str:
+    doc = pdfium.PdfDocument(str(pdf_path))
+    parts: List[str] = []
+    for i in range(len(doc)):
+        page = doc[i]
+        textpage = page.get_textpage()
+        s = textpage.get_text_range(flags=PDFTEXT_FLAGS)
+        parts.append(s)
+        textpage.close()
+        page.close()
+    doc.close()
+    return "\n".join(parts)
 
-with pdfplumber.open(pdf_path) as pdf:
-    for i, page in enumerate(pdf.pages):
-        table = page.extract_table()
-        if table:
-            df = pd.DataFrame(table[1:], columns=table[0])
-            df["Page"] = i + 1
-            rows.append(df)
+# --- Optional: repair function ONLY for the “every character doubled” case
+_pair_rx = re.compile(r"(.)\1")
+def is_uniformly_doubled(s: str, sample_chars: int = 400) -> bool:
+    """Heuristic: if ~80% of the first N non-space chars appear as doubled pairs."""
+    chars = [c for c in s if not c.isspace()]
+    if not chars:
+        return False
+    sample = "".join(chars[:sample_chars])
+    # Count how many positions look like AA, bb, etc., when read in pairs
+    pairs = [sample[i:i+2] for i in range(0, len(sample) - 1, 2)]
+    if not pairs:
+        return False
+    doubled = sum(1 for p in pairs if len(p) == 2 and p[0] == p[1])
+    ratio = doubled / len(pairs)
+    return ratio >= 0.80
 
-if rows:
-    final_df = pd.concat(rows, ignore_index=True)
-    final_df.to_excel(output_excel, index=False)
-    print(f"✅ Saved structured data to: {output_excel}")
-else:
-    print("⚠️ No tables found — check if the PDF layout is too complex.")
+def undouble_text(s: str) -> str:
+    """Collapse AA→A, bb→b in PAIRS ONLY (won’t damage real double letters across word boundaries)."""
+    out = []
+    i = 0
+    while i < len(s):
+        if i + 1 < len(s) and s[i] == s[i+1]:
+            out.append(s[i])
+            i += 2
+        else:
+            out.append(s[i])
+            i += 1
+    return "".join(out)
 
+def extract_clean_text(pdf_path: str | Path) -> str:
+    raw = read_pdf_text_pdfium(pdf_path)
+    if is_uniformly_doubled(raw):
+        return undouble_text(raw)
+    return raw
 
-#################################3
+# --- If you need tables back into DataFrames/Excel ----------------------------
+def extract_tables(pdf_path: str | Path) -> pd.DataFrame | None:
+    """Use pdfplumber for Excel-like tables. You still benefit from PDFium’s cleaner text layer."""
+    frames = []
+    with pdfplumber.open(pdf_path) as pdf:
+        for pno, page in enumerate(pdf.pages, 1):
+            table = page.extract_table()
+            if table:
+                df = pd.DataFrame(table[1:], columns=table[0])
+                df["__page__"] = pno
+                frames.append(df)
+    return pd.concat(frames, ignore_index=True) if frames else None
 
-import aspose.pdf as ap
-import os
+if __name__ == "__main__":
+    pdf_path = r"C:\path\to\your.pdf"
 
-pdf_path = r"C:\path\to\your\file.pdf"
-output_excel = os.path.splitext(pdf_path)[0] + "_converted.xlsx"
+    # 1) Clean full text (handles duplicates/ligatures/invisible overlays)
+    text = extract_clean_text(pdf_path)
+    print(text[:800])
 
-doc = ap.Document(pdf_path)
-save_options = ap.ExcelSaveOptions()
-save_options.format = ap.ExcelSaveOptions.ExcelFormat.XLSX
-
-doc.save(output_excel, save_options)
-print(f"✅ Converted PDF back to Excel: {output_excel}")
-
-
+    # 2) If you expect tables, grab them too
+    df = extract_tables(pdf_path)
+    if df is not None:
+        out_xlsx = str(Path(pdf_path).with_suffix("")) + "_tables.xlsx"
+        df.to_excel(out_xlsx, index=False)
+        print(f"✅ Saved tables to: {out_xlsx}")
+    else:
+        print("ℹ️ No tables detected with a simple pass. (Merged/complex headers may need tweaks.)")
