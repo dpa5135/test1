@@ -1,1 +1,187 @@
+import os
+import io
+import re
+import pandas as pd
+import fitz  # PyMuPDF
+from openpyxl import load_workbook
+import pikepdf
+
+# =========================
+# CONFIG
+# =========================
+PDF_FOLDER = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"   # <-- your folder
+OUTPUT_XLSX = os.path.join(PDF_FOLDER, "activity_summary_results_FIXED.xlsx")
+EXTRACTED_XLSX_DIR = os.path.join(PDF_FOLDER, "EmbeddedUnderlineExcels")    # optional audit
+os.makedirs(EXTRACTED_XLSX_DIR, exist_ok=True)
+
+SUMMARY_LABEL_RE = re.compile(r"\bsummary\s*of\s*activity\b", re.IGNORECASE)
+
+# =========================
+# A) Robust attachment extraction (no guesses, real EmbeddedFiles)
+# =========================
+def extract_first_xlsx_attachment(pdf_path):
+    """
+    Uses the PDF's EmbeddedFiles name tree (pikepdf) to extract the FIRST .xlsx attachment.
+    Returns (excel_bytes, filename) or (None, None) if not found.
+    """
+    try:
+        with pikepdf.open(pdf_path) as pdf:
+            names = pdf.Root.get("/Names")
+            if not names:
+                return None, None
+            embedded_files = names.get("/EmbeddedFiles")
+            if not embedded_files:
+                return None, None
+            file_names = embedded_files.get("/Names")
+            if not file_names:
+                return None, None
+
+            # file_names is an array: [name1, filespec1, name2, filespec2, ...]
+            for i in range(0, len(file_names), 2):
+                # Display name (could be bytes or string)
+                disp_name_obj = file_names[i]
+                disp_name = str(disp_name_obj) if not isinstance(disp_name_obj, pikepdf.String) else str(disp_name_obj)
+                filespec = file_names[i + 1]
+
+                # filespec is a dictionary; its embedded stream is under /EF /F
+                ef = filespec.get("/EF")
+                if not ef:
+                    continue
+                file_stream = ef.get("/F")
+                if not file_stream:
+                    continue
+
+                # filename in /F or /UF
+                filename = filespec.get("/F") or filespec.get("/UF") or disp_name
+                filename = str(filename)
+
+                # Only .xlsx
+                if filename.lower().endswith(".xlsx"):
+                    with io.BytesIO() as buf:
+                        buf.write(file_stream.read_bytes())
+                        return buf.getvalue(), filename
+        return None, None
+    except Exception as e:
+        # If name tree not present or malformed, treat as no attachment
+        return None, None
+
+# =========================
+# B) Extract summary from an Excel (bytes) — your original logic
+# =========================
+def extract_summary_from_excel_bytes(excel_bytes):
+    """
+    - If your files always have the merged block C39:I41, keep that.
+    - If sometimes it's a labeled cell "Summary of Activity" with value below, also attempt that pattern.
+    """
+    try:
+        wb = load_workbook(io.BytesIO(excel_bytes), data_only=True)
+        ws = wb.active
+
+        # 1) Try your original merged range C39:I41
+        vals = []
+        for row in ws.iter_rows(min_row=39, max_row=41, min_col=3, max_col=9):
+            for cell in row:
+                if cell.value not in (None, ""):
+                    vals.append(str(cell.value))
+        merged_text = " ".join(vals).strip()
+        if merged_text:
+            return merged_text
+
+        # 2) If not present, try the label+below pattern
+        for row in ws.iter_rows():
+            for cell in row:
+                val = str(cell.value).strip() if cell.value else ""
+                if SUMMARY_LABEL_RE.search(val):
+                    # read first non-empty cell downward in same column
+                    r = cell.row + 1
+                    for off in range(0, 10):
+                        v = ws.cell(row=r + off, column=cell.column).value
+                        if v not in (None, ""):
+                            return str(v).strip()
+        return "Not found"
+    except Exception as e:
+        return f"Error reading Excel: {e}"
+
+# =========================
+# C) Extract summary directly from PDF text (no conversion, no garble)
+# =========================
+def extract_summary_from_pdf_text(pdf_path):
+    """
+    Use PyMuPDF to read text blocks in natural order.
+    Pull text after 'Summary of Activity' either on the same line or next line.
+    """
+    try:
+        with fitz.open(pdf_path) as doc:
+            for page in doc:
+                blocks = page.get_text("blocks")
+                # sort by y, then x
+                blocks.sort(key=lambda b: (round(b[1], 1), round(b[0], 1)))
+                # split blocks into lines
+                lines = []
+                for b in blocks:
+                    txt = (b[4] or "").strip()
+                    if not txt:
+                        continue
+                    for ln in txt.splitlines():
+                        s = ln.strip()
+                        if s:
+                            lines.append(s)
+
+                # scan for label
+                for i, line in enumerate(lines):
+                    if SUMMARY_LABEL_RE.search(line):
+                        # same line after label?
+                        after = SUMMARY_LABEL_RE.split(line, 1)[-1].strip(" :-\t")
+                        if after:
+                            return after
+                        # otherwise next non-empty line within a short window
+                        for j in range(i + 1, min(i + 6, len(lines))):
+                            nxt = lines[j].strip()
+                            if nxt:
+                                return nxt
+        return "Not found"
+    except Exception as e:
+        return f"Error reading PDF: {e}"
+
+# =========================
+# MAIN
+# =========================
+def main():
+    rows = []
+    for fname in os.listdir(PDF_FOLDER):
+        if not fname.lower().endswith(".pdf"):
+            continue
+        pdf_path = os.path.join(PDF_FOLDER, fname)
+        print(f"Processing: {fname}")
+
+        # 1) Try real embedded attachment first
+        excel_bytes, excel_name = extract_first_xlsx_attachment(pdf_path)
+        if excel_bytes:
+            # optional: save for audit
+            try:
+                out_path = os.path.join(EXTRACTED_XLSX_DIR, f"embedded_{excel_name}")
+                with open(out_path, "wb") as f:
+                    f.write(excel_bytes)
+                print(f"  🧩 Extracted attachment: {excel_name}")
+            except Exception:
+                pass
+
+            summary = extract_summary_from_excel_bytes(excel_bytes)
+        else:
+            # 2) No attachment -> Extract directly from PDF text (no conversion)
+            print("  (no embedded .xlsx) parsing text…")
+            summary = extract_summary_from_pdf_text(pdf_path)
+
+        if not summary or str(summary).strip() == "":
+            summary = "Not found"
+
+        rows.append({"PDF_File_Name": fname, "Activity_Summary": summary})
+
+    df = pd.DataFrame(rows)
+    df.to_excel(OUTPUT_XLSX, index=False)
+    print(f"\n✅ Done. Results saved to: {OUTPUT_XLSX}")
+
+if __name__ == "__main__":
+    main()
+
 
