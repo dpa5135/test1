@@ -1,91 +1,51 @@
-from __future__ import annotations
-import re
-from typing import Iterable, List
-import pypdfium2 as pdfium
-import pdfplumber
+pip install pdf2image pytesseract pillow pandas openpyxl
+
+
+import os
+from pdf2image import convert_from_path
+from PIL import Image
+import pytesseract
 import pandas as pd
-from pathlib import Path
 
-PDFTEXT_FLAGS = (
-    pdfium.PDFTEXT_EXCLUDE_INVISIBLE                # ignore hidden text layers
-    | pdfium.PDFTEXT_NO_DUPLICATE_SPACE             # normalize spaces
-    | pdfium.PDFTEXT_NO_LIGATURES                   # expand ligatures → "fi" not ﬁ
-    | pdfium.PDFTEXT_REMOVE_CONTROL_CHARS           # strip stray controls
-)
+# === CONFIGURATION ===
+pdf_path = r"C:\path\to\your\file.pdf"
+output_folder = r"C:\path\to\output_folder"
+os.makedirs(output_folder, exist_ok=True)
 
-def read_pdf_text_pdfium(pdf_path: str | Path) -> str:
-    doc = pdfium.PdfDocument(str(pdf_path))
-    parts: List[str] = []
-    for i in range(len(doc)):
-        page = doc[i]
-        textpage = page.get_textpage()
-        s = textpage.get_text_range(flags=PDFTEXT_FLAGS)
-        parts.append(s)
-        textpage.close()
-        page.close()
-    doc.close()
-    return "\n".join(parts)
+# === STEP 1: Convert PDF → Images ===
+print("Converting PDF to images...")
+images = convert_from_path(pdf_path, dpi=300)
+image_paths = []
 
-# --- Optional: repair function ONLY for the “every character doubled” case
-_pair_rx = re.compile(r"(.)\1")
-def is_uniformly_doubled(s: str, sample_chars: int = 400) -> bool:
-    """Heuristic: if ~80% of the first N non-space chars appear as doubled pairs."""
-    chars = [c for c in s if not c.isspace()]
-    if not chars:
-        return False
-    sample = "".join(chars[:sample_chars])
-    # Count how many positions look like AA, bb, etc., when read in pairs
-    pairs = [sample[i:i+2] for i in range(0, len(sample) - 1, 2)]
-    if not pairs:
-        return False
-    doubled = sum(1 for p in pairs if len(p) == 2 and p[0] == p[1])
-    ratio = doubled / len(pairs)
-    return ratio >= 0.80
+for i, img in enumerate(images):
+    image_path = os.path.join(output_folder, f"page_{i+1}.png")
+    img.save(image_path, "PNG")
+    image_paths.append(image_path)
 
-def undouble_text(s: str) -> str:
-    """Collapse AA→A, bb→b in PAIRS ONLY (won’t damage real double letters across word boundaries)."""
-    out = []
-    i = 0
-    while i < len(s):
-        if i + 1 < len(s) and s[i] == s[i+1]:
-            out.append(s[i])
-            i += 2
-        else:
-            out.append(s[i])
-            i += 1
-    return "".join(out)
+print(f"Saved {len(image_paths)} image(s): {image_paths}")
 
-def extract_clean_text(pdf_path: str | Path) -> str:
-    raw = read_pdf_text_pdfium(pdf_path)
-    if is_uniformly_doubled(raw):
-        return undouble_text(raw)
-    return raw
+# === STEP 2: Convert Images → Text (OCR) ===
+all_text = []
+print("Extracting text from images...")
+for img_path in image_paths:
+    text = pytesseract.image_to_string(Image.open(img_path))
+    all_text.append({"image_file": os.path.basename(img_path), "extracted_text": text})
 
-# --- If you need tables back into DataFrames/Excel ----------------------------
-def extract_tables(pdf_path: str | Path) -> pd.DataFrame | None:
-    """Use pdfplumber for Excel-like tables. You still benefit from PDFium’s cleaner text layer."""
-    frames = []
-    with pdfplumber.open(pdf_path) as pdf:
-        for pno, page in enumerate(pdf.pages, 1):
-            table = page.extract_table()
-            if table:
-                df = pd.DataFrame(table[1:], columns=table[0])
-                df["__page__"] = pno
-                frames.append(df)
-    return pd.concat(frames, ignore_index=True) if frames else None
+# === STEP 3: Save to CSV and Excel ===
+csv_path = os.path.join(output_folder, "extracted_text.csv")
+excel_path = os.path.join(output_folder, "extracted_text.xlsx")
 
-if __name__ == "__main__":
-    pdf_path = r"C:\path\to\your.pdf"
+df = pd.DataFrame(all_text)
+df.to_csv(csv_path, index=False, encoding="utf-8-sig")
+df.to_excel(excel_path, index=False)
 
-    # 1) Clean full text (handles duplicates/ligatures/invisible overlays)
-    text = extract_clean_text(pdf_path)
-    print(text[:800])
+print(f"Data saved to:\nCSV: {csv_path}\nExcel: {excel_path}")
 
-    # 2) If you expect tables, grab them too
-    df = extract_tables(pdf_path)
-    if df is not None:
-        out_xlsx = str(Path(pdf_path).with_suffix("")) + "_tables.xlsx"
-        df.to_excel(out_xlsx, index=False)
-        print(f"✅ Saved tables to: {out_xlsx}")
-    else:
-        print("ℹ️ No tables detected with a simple pass. (Merged/complex headers may need tweaks.)")
+# === STEP 4: Read Text Back from CSV/Excel ===
+print("\nReading text back from Excel...")
+df_read = pd.read_excel(excel_path)
+
+# Example: print the first few extracted lines
+for idx, row in df_read.head(3).iterrows():
+    print(f"\n--- Page {idx+1} ---")
+    print(row["extracted_text"][:300])  # Print first 300 chars
