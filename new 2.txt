@@ -1,31 +1,41 @@
-import fitz  # PyMuPDF
-
-pdf_path = "example.pdf"
-
-with fitz.open(pdf_path) as doc:
-    text = ""
-    for page in doc:
-        text += page.get_text("text")
-
-print(text[:1000])  # preview first 1000 characters
-
-
-##################################################3
-
 import pdfplumber
 import pandas as pd
+import os
 
-pdf_path = "example.pdf"
+pdf_path = r"C:\path\to\your\file.pdf"
+output_excel = r"C:\path\to\output.xlsx"
+
 rows = []
 
 with pdfplumber.open(pdf_path) as pdf:
-    for page in pdf.pages:
+    for i, page in enumerate(pdf.pages):
         table = page.extract_table()
         if table:
             df = pd.DataFrame(table[1:], columns=table[0])
+            df["Page"] = i + 1
             rows.append(df)
 
 if rows:
-    final_df = pd.concat(rows)
-    final_df.to_excel("parsed_tables.xlsx", index=False)
-    print(final_df.head())
+    final_df = pd.concat(rows, ignore_index=True)
+    final_df.to_excel(output_excel, index=False)
+    print(f"✅ Saved structured data to: {output_excel}")
+else:
+    print("⚠️ No tables found — check if the PDF layout is too complex.")
+
+
+#################################3
+
+import aspose.pdf as ap
+import os
+
+pdf_path = r"C:\path\to\your\file.pdf"
+output_excel = os.path.splitext(pdf_path)[0] + "_converted.xlsx"
+
+doc = ap.Document(pdf_path)
+save_options = ap.ExcelSaveOptions()
+save_options.format = ap.ExcelSaveOptions.ExcelFormat.XLSX
+
+doc.save(output_excel, save_options)
+print(f"✅ Converted PDF back to Excel: {output_excel}")
+
+
