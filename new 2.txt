@@ -1,57 +1,31 @@
-import os
+import fitz  # PyMuPDF
+
+pdf_path = "example.pdf"
+
+with fitz.open(pdf_path) as doc:
+    text = ""
+    for page in doc:
+        text += page.get_text("text")
+
+print(text[:1000])  # preview first 1000 characters
+
+
+##################################################3
+
+import pdfplumber
 import pandas as pd
-import tabula
-from openpyxl import load_workbook
 
-# === CONFIGURATION ===
-pdf_folder = r"D:\Path\To\Your\PDFs"   # 🔸 Update this to your folder
-converted_folder = r"D:\Path\To\ConvertedExcels"
-output_file = "activity_summary_results.xlsx"
+pdf_path = "example.pdf"
+rows = []
 
-os.makedirs(converted_folder, exist_ok=True)
+with pdfplumber.open(pdf_path) as pdf:
+    for page in pdf.pages:
+        table = page.extract_table()
+        if table:
+            df = pd.DataFrame(table[1:], columns=table[0])
+            rows.append(df)
 
-results = []
-
-for file in os.listdir(pdf_folder):
-    if not file.lower().endswith(".pdf"):
-        continue
-
-    pdf_path = os.path.join(pdf_folder, file)
-    print(f"Processing: {file}")
-
-    csv_output = os.path.join(converted_folder, file.replace(".pdf", ".csv"))
-    excel_output = os.path.join(converted_folder, file.replace(".pdf", ".xlsx"))
-
-    try:
-        # Step 1 — Convert PDF to CSV (Tabula supports this)
-        tabula.convert_into(pdf_path, csv_output, output_format="csv", pages="all")
-        print(f"  ✅ Converted to CSV: {csv_output}")
-
-        # Step 2 — Convert CSV → Excel
-        df_csv = pd.read_csv(csv_output)
-        df_csv.to_excel(excel_output, index=False)
-
-        # Step 3 — Extract values from C39:I41 range
-        wb = load_workbook(excel_output, data_only=True)
-        ws = wb.active
-
-        text_values = []
-        for row in ws.iter_rows(min_row=39, max_row=41, min_col=3, max_col=9):
-            for cell in row:
-                if cell.value:
-                    text_values.append(str(cell.value))
-
-        summary = " ".join(text_values).strip() if text_values else "Not found"
-
-    except Exception as e:
-        summary = f"Error: {e}"
-
-    results.append({
-        "PDF_File_Name": file,
-        "Activity_Summary": summary
-    })
-
-# === Step 4 — Save results ===
-df = pd.DataFrame(results)
-df.to_excel(output_file, index=False)
-print(f"\n✅ Extraction complete! Results saved to {output_file}")
+if rows:
+    final_df = pd.concat(rows)
+    final_df.to_excel("parsed_tables.xlsx", index=False)
+    print(final_df.head())
