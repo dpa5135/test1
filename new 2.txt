@@ -1,58 +1,47 @@
 import os
 import pandas as pd
-import subprocess
 
 # === CONFIGURATION ===
 base_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
-output_combined = os.path.join(base_folder, "activity_summary_results_Combined.xlsx")
 
-# Paths for your two working scripts
-embedded_script = os.path.join(base_folder, "extract_embedded_excel.py")
-camelot_script = os.path.join(base_folder, "extract_camelot_summary.py")
+file_camelot = os.path.join(base_folder, "SummaryOfActivity_Results.xlsx")
+file_embedded = os.path.join(base_folder, "activity_summary_results_PDFvExcel.xlsx")
+output_combined = os.path.join(base_folder, "SummaryOfActivity_Combine.xlsx")
 
-# The outputs that your existing scripts already generate
-embedded_output = os.path.join(base_folder, "activity_summary_results_PDFvExcel.xlsx")
-camelot_output = os.path.join(base_folder, "SummaryOfActivity_Results.xlsx")
+# === LOAD FILES ===
+df_camelot = pd.read_excel(file_camelot)
+df_embedded = pd.read_excel(file_embedded)
 
-# === STEP 1️⃣: Run your embedded Excel extractor exactly as-is ===
-print("\n▶ Running embedded Excel extraction...")
-subprocess.run(["python", embedded_script], check=False)
+# Normalize column names just in case
+df_camelot.columns = [c.strip() for c in df_camelot.columns]
+df_embedded.columns = [c.strip() for c in df_embedded.columns]
 
-# === STEP 2️⃣: Run your Camelot parser exactly as-is ===
-print("\n▶ Running Camelot table extraction for remaining PDFs...")
-subprocess.run(["python", camelot_script], check=False)
+# Ensure both have the same structure
+df_camelot.rename(columns={"Activity_Summary": "Summary_of_Activity"}, inplace=True, errors="ignore")
+df_embedded.rename(columns={"Activity_Summary": "Summary_of_Activity"}, inplace=True, errors="ignore")
 
-# === STEP 3️⃣: Combine results ===
-print("\n▶ Combining both results...")
+# Define invalid or useless embedded values
+invalid_values = [
+    "Not found",
+    "Summary of Activity:",
+    "Summary of Activity",
+    "Summary of Activity*:",
+    "Summary of Activity*",
+    "Summary of Activity *:",
+    "Summary of Activity *",
+]
 
-df_all = pd.DataFrame()
+# === MERGE LOGIC ===
+for idx, row in df_camelot.iterrows():
+    if str(row["Summary_of_Activity"]).strip() == "Not found":
+        pdf_name = row["PDF_File_Name"]
+        match = df_embedded[df_embedded["PDF_File_Name"].str.strip().eq(str(pdf_name).strip())]
+        if not match.empty:
+            new_val = str(match.iloc[0]["Summary_of_Activity"]).strip()
+            # Replace only if new_val is valid (not empty or invalid)
+            if new_val and new_val not in invalid_values:
+                df_camelot.at[idx, "Summary_of_Activity"] = new_val
 
-if os.path.exists(embedded_output):
-    df_emb = pd.read_excel(embedded_output)
-    df_emb.columns = [c.strip() for c in df_emb.columns]
-    df_all = pd.concat([df_all, df_emb], ignore_index=True)
-
-if os.path.exists(camelot_output):
-    df_cam = pd.read_excel(camelot_output)
-    df_cam.columns = [c.strip() for c in df_cam.columns]
-    df_all = pd.concat([df_all, df_cam], ignore_index=True)
-
-# Deduplicate by PDF file name, keeping the first found summary
-if not df_all.empty:
-    df_all = df_all.drop_duplicates(subset=["PDF_File_Name", "PDF_File"], keep="first")
-
-# Normalize column names for consistency
-for possible in ["PDF_File", "PDF_File_Name"]:
-    if possible in df_all.columns:
-        df_all.rename(columns={possible: "PDF_File_Name"}, inplace=True)
-if "Activity_Summary" not in df_all.columns and "Summary_of_Activity" in df_all.columns:
-    df_all.rename(columns={"Summary_of_Activity": "Activity_Summary"}, inplace=True)
-
-# Sort for readability
-df_all.sort_values(by="PDF_File_Name", inplace=True, ignore_index=True)
-
-# Save unified result
-df_all.to_excel(output_combined, index=False)
-
-print(f"\n✅ Combined extraction complete!")
-print(f"💾 Final results saved to: {output_combined}")
+# === SAVE FINAL RESULT ===
+df_camelot.to_excel(output_combined, index=False)
+print(f"\n✅ Combined Summary file saved as:\n{output_combined}")
