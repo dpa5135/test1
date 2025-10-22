@@ -6,7 +6,7 @@ import pandas as pd
 pdf_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
 output_excel = os.path.join(pdf_folder, "SummaryOfActivity_Results.xlsx")
 
-# === HELPER FUNCTION to extract summary of activity ===
+# === HELPER FUNCTION ===
 def extract_summary_from_pdf(pdf_path):
     try:
         tables = camelot.read_pdf(pdf_path, pages="all")
@@ -19,14 +19,26 @@ def extract_summary_from_pdf(pdf_path):
         for col in df.columns:
             for cell in df[col]:
                 if isinstance(cell, str) and "Summary of Activity" in cell:
+                    # Split into lines and remove empty ones
                     lines = [line.strip() for line in cell.split("\n") if line.strip()]
-                    for j, line in enumerate(lines):
-                        if "Summary of Activity" in line and j + 1 < len(lines):
-                            return lines[j + 1]  # Line immediately below
+
+                    # Find start and end indexes
+                    start_idx = next((i for i, line in enumerate(lines) if "Summary of Activity" in line), None)
+                    end_idx = next((i for i, line in enumerate(lines) if "ATTACH FILE" in line), None)
+
+                    # Extract lines between the two markers (exclude both)
+                    if start_idx is not None:
+                        start_idx += 1  # start *after* Summary of Activity
+                        if end_idx is None:
+                            extracted = lines[start_idx:]
+                        else:
+                            extracted = lines[start_idx:end_idx]
+                        if extracted:
+                            return " ".join(extracted)
     return None
 
 
-# === MAIN LOOP over all PDFs ===
+# === MAIN LOOP: iterate through all PDFs in folder ===
 results = []
 
 for file_name in os.listdir(pdf_folder):
@@ -39,14 +51,14 @@ for file_name in os.listdir(pdf_folder):
         if extracted_value:
             print(f"✅ Extracted: {extracted_value}")
         else:
-            print(f"⚠️ 'Summary of Activity' not found in {file_name}")
+            print(f"⚠️ 'Summary of Activity' not found or no content before 'ATTACH FILE' in {file_name}")
 
         results.append({
             "PDF_File": file_name,
             "Summary_of_Activity": extracted_value if extracted_value else "Not found"
         })
 
-# === SAVE ALL RESULTS TO EXCEL ===
+# === SAVE FINAL RESULTS TO EXCEL ===
 df_results = pd.DataFrame(results)
 df_results.to_excel(output_excel, index=False)
 
