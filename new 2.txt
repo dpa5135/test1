@@ -1,47 +1,24 @@
 import os
-import pandas as pd
 
-# === CONFIGURATION ===
+# Define your base folder and output names ONCE here
 base_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
+output_file_name = "SummaryOfActivity_Results.xlsx"
 
-file_camelot = os.path.join(base_folder, "SummaryOfActivity_Results.xlsx")
-file_embedded = os.path.join(base_folder, "activity_summary_results_PDFvExcel.xlsx")
-output_combined = os.path.join(base_folder, "SummaryOfActivity_Combine.xlsx")
+# Export them as environment variables so other .py scripts can access them
+os.environ["PDF_FOLDER"] = base_folder
+os.environ["OUTPUT_FILE"] = output_file_name
 
-# === LOAD FILES ===
-df_camelot = pd.read_excel(file_camelot)
-df_embedded = pd.read_excel(file_embedded)
+print("Environment variables set successfully ✅")
 
-# Normalize column names just in case
-df_camelot.columns = [c.strip() for c in df_camelot.columns]
-df_embedded.columns = [c.strip() for c in df_embedded.columns]
 
-# Ensure both have the same structure
-df_camelot.rename(columns={"Activity_Summary": "Summary_of_Activity"}, inplace=True, errors="ignore")
-df_embedded.rename(columns={"Activity_Summary": "Summary_of_Activity"}, inplace=True, errors="ignore")
+####################################################
 
-# Define invalid or useless embedded values
-invalid_values = [
-    "Not found",
-    "Summary of Activity:",
-    "Summary of Activity",
-    "Summary of Activity*:",
-    "Summary of Activity*",
-    "Summary of Activity *:",
-    "Summary of Activity *",
-]
 
-# === MERGE LOGIC ===
-for idx, row in df_camelot.iterrows():
-    if str(row["Summary_of_Activity"]).strip() == "Not found":
-        pdf_name = row["PDF_File_Name"]
-        match = df_embedded[df_embedded["PDF_File_Name"].str.strip().eq(str(pdf_name).strip())]
-        if not match.empty:
-            new_val = str(match.iloc[0]["Summary_of_Activity"]).strip()
-            # Replace only if new_val is valid (not empty or invalid)
-            if new_val and new_val not in invalid_values:
-                df_camelot.at[idx, "Summary_of_Activity"] = new_val
+import os
 
-# === SAVE FINAL RESULT ===
-df_camelot.to_excel(output_combined, index=False)
-print(f"\n✅ Combined Summary file saved as:\n{output_combined}")
+# Read paths that were set from the notebook
+pdf_folder = os.environ.get("PDF_FOLDER", r".")  # Default '.' if not set
+output_file = os.environ.get("OUTPUT_FILE", "default_output.xlsx")
+
+print(f"Using folder: {pdf_folder}")
+print(f"Saving to: {output_file}")
