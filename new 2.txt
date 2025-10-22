@@ -8,40 +8,33 @@ output_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
 tables = camelot.read_pdf(pdf_path, pages="all")
 
 for i, table in enumerate(tables):
-    df = table.df.copy()
+    df = table.df
+    excel_path = os.path.join(output_folder, f"table_{i+1}.xlsx")
+    df.to_excel(excel_path, index=False)
+    print(f"✅ Saved: {excel_path}")
 
-    # --- STEP 1: Clean up each cell ---
-    def clean_cell(text):
-        if not isinstance(text, str):
-            return text
-        # Replace newlines/tabs with single space
-        text = text.replace('\n', ' ').replace('\t', ' ')
-        # Split by multiple spaces
-        parts = [p.strip() for p in text.split() if p.strip()]
-        # Join with commas or keep as list depending on your goal
-        return parts
+    # === STEP 2: Search for "Summary of Activity" and extract the next line ===
+    extracted_value = None
 
-    df = df.applymap(clean_cell)
+    for col in df.columns:
+        for cell in df[col]:
+            if isinstance(cell, str) and "Summary of Activity" in cell:
+                lines = [line.strip() for line in cell.split("\n") if line.strip()]
+                for j, line in enumerate(lines):
+                    if "Summary of Activity" in line and j + 1 < len(lines):
+                        extracted_value = lines[j + 1]  # line immediately below
+                        break
+            if extracted_value:
+                break
+        if extracted_value:
+            break
 
-    # --- STEP 2: Flatten lists so each item gets its own column ---
-    expanded_rows = []
-    for _, row in df.iterrows():
-        expanded = []
-        for cell in row:
-            if isinstance(cell, list):
-                expanded.extend(cell)
-            else:
-                expanded.append(cell)
-        expanded_rows.append(expanded)
-
-    # --- STEP 3: Normalize uneven row lengths ---
-    max_len = max(len(r) for r in expanded_rows)
-    for r in expanded_rows:
-        r.extend([""] * (max_len - len(r)))
-
-    clean_df = pd.DataFrame(expanded_rows)
-
-    excel_path = os.path.join(output_folder, f"table_{i+1}_clean.xlsx")
-    clean_df.to_excel(excel_path, index=False, header=False)
-    print(f"✅ Saved cleaned table: {excel_path}")
-
+    # === STEP 3: Save extracted value ===
+    if extracted_value:
+        summary_path = os.path.join(output_folder, f"summary_of_activity_table_{i+1}.txt")
+        with open(summary_path, "w", encoding="utf-8") as f:
+            f.write(extracted_value)
+        print(f"🎯 Extracted Summary of Activity: {extracted_value}")
+        print(f"💾 Saved to: {summary_path}")
+    else:
+        print("⚠️ 'Summary of Activity' not found in this table.")
