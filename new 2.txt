@@ -1,24 +1,111 @@
 import os
+import re
+import pandas as pd
+from PyPDF2 import PdfReader
+from openpyxl import load_workbook
+import fitz  # PyMuPDF
 
-# Define your base folder and output names ONCE here
-base_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
-output_file_name = "SummaryOfActivity_Results.xlsx"
+# === CONFIGURATION ===
+pdf_folder = os.environ.get("PDF_FOLDER")
+output_file_name = os.environ.get("OUTPUT_FILE_PDF_EMAILS", "activity_summary_results_PDFvExcel.xlsx")
+output_file = os.path.join(pdf_folder, output_file_name)
 
-# Export them as environment variables so other .py scripts can access them
-os.environ["PDF_FOLDER"] = base_folder
-os.environ["OUTPUT_FILE"] = output_file_name
+# === FUNCTION 1: Extract embedded Excel data stream ===
+def extract_embedded_excel_stream(pdf_path):
+    with fitz.open(pdf_path) as doc:
+        for xref in range(1, doc.xref_length()):
+            try:
+                obj = doc.xref_object(xref)
+                if ".xlsx" in obj:
+                    match = re.search(r"/F\s*\(\s*(\S+\.xlsx)\s*\)", obj)
+                    if match:
+                        stream_ref = int(match.group(1))
+                        excel_bytes = doc.xref_stream(stream_ref)
+                        name_match = re.search(r"\(([\w\d\-\.]+\.xlsx)\)", obj)
+                        filename = name_match.group(1) if name_match else "embedded.xlsx"
+                        return excel_bytes, filename
+            except Exception:
+                pass
+    return None, None
 
-print("Environment variables set successfully ✅")
+
+# === FUNCTION 2: Extract summary from Excel bytes ===
+def extract_summary_from_excel_bytes(excel_bytes):
+    try:
+        import io
+        wb = load_workbook(io.BytesIO(excel_bytes), data_only=True)
+        ws = wb.active
+        text_values = []
+        for row in ws.iter_rows(min_row=39, max_row=41, min_col=3, max_col=9):
+            for cell in row:
+                if cell.value:
+                    text_values.append(str(cell.value))
+        return " ".join(text_values).strip()
+    except Exception as e:
+        return f"Error reading Excel: {e}"
 
 
-####################################################
+# === FUNCTION 3: Extract text summary directly from PDF ===
+def extract_summary_from_pdf_text(pdf_path):
+    try:
+        reader = PdfReader(pdf_path)
+        text = " ".join([page.extract_text() or "" for page in reader.pages])
+        match = re.search(r"(Account\s+Closeout|Summary\s+of\s+Activity[-:\.]?\s+.+)", text, re.IGNORECASE)
+        if match:
+            return match.group(0).strip()
+        return None
+    except Exception as e:
+        return f"Error reading PDF text: {e}"
 
 
-import os
+# === MAIN PROCESS ===
+results = []
+temp_excel_files = []  # Track extracted temporary Excel files
 
-# Read paths that were set from the notebook
-pdf_folder = os.environ.get("PDF_FOLDER", r".")  # Default '.' if not set
-output_file = os.environ.get("OUTPUT_FILE", "default_output.xlsx")
+for file in os.listdir(pdf_folder):
+    if not file.lower().endswith(".pdf"):
+        continue
 
-print(f"Using folder: {pdf_folder}")
-print(f"Saving to: {output_file}")
+    pdf_path = os.path.join(pdf_folder, file)
+    print(f"▶ Processing: {file}")
+    summary = None
+
+    # Step 1: Try to extract embedded Excel
+    excel_bytes, excel_filename = extract_embedded_excel_stream(pdf_path)
+    if excel_bytes:
+        print(f"  ✓ Found embedded Excel: {excel_filename}")
+        summary = extract_summary_from_excel_bytes(excel_bytes)
+        # Save Excel temporarily
+        extracted_path = os.path.join(pdf_folder, f"extracted_{excel_filename}")
+        with open(extracted_path, "wb") as f:
+            f.write(excel_bytes)
+        temp_excel_files.append(extracted_path)
+        print(f"  💾 Saved attachment as: {extracted_path}")
+
+    # Step 2: Fallback to PDF text
+    if not summary or summary.strip() == "" or summary.startswith("Error"):
+        pdf_summary = extract_summary_from_pdf_text(pdf_path)
+        if pdf_summary:
+            summary = pdf_summary
+
+    # Step 3: Default if nothing found
+    if not summary or summary.strip() == "":
+        summary = "Not found"
+
+    results.append({"PDF_File_Name": file, "Summary_of_Activity": summary})
+
+# === SAVE RESULTS ===
+df = pd.DataFrame(results)
+df.to_excel(output_file, index=False)
+print(f"\n✅ Extraction Complete! Results saved to {output_file}")
+
+# === CLEANUP TEMP FILES ===
+print("\n🧹 Cleaning up temporary Excel files...")
+for temp_file in temp_excel_files:
+    try:
+        os.remove(temp_file)
+        print(f"  🗑️ Deleted: {os.path.basename(temp_file)}")
+    except Exception as e:
+        print(f"  ⚠️ Could not delete {temp_file}: {e}")
+
+print("\n✨ Cleanup complete. All extracted Excel files removed.")
