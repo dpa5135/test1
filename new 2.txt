@@ -1,13 +1,85 @@
 import os
-import camelot
+import re
+import io
 import pandas as pd
+import fitz  # PyMuPDF
+import camelot
+from PyPDF2 import PdfReader
+from openpyxl import load_workbook
 
 # === CONFIGURATION ===
-pdf_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
-output_excel = os.path.join(pdf_folder, "SummaryOfActivity_Results.xlsx")
+pdf_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"  # folder path
+output_file = os.path.join(pdf_folder, "activity_summary_results_Combined.xlsx")
 
-# === HELPER FUNCTION ===
-def extract_summary_from_pdf(pdf_path):
+# === FUNCTION 1: Extract embedded Excel data stream ===
+def extract_embedded_excel_stream(pdf_path):
+    """
+    Searches for embedded Excel streams inside the PDF and extracts the first one found.
+    Returns (excel_bytes, filename) or (None, None) if not found.
+    """
+    with fitz.open(pdf_path) as doc:
+        for xref in range(1, doc.xref_length()):
+            try:
+                obj = doc.xref_object(xref)
+                if ".xlsx" in obj:
+                    # Find the object containing the binary stream
+                    match = re.search(r"/F\s*\(\s*(\S+\.xlsx)\s*\)", obj)
+                    if match:
+                        stream_ref = xref  # use xref directly (fix)
+                        excel_bytes = doc.xref_stream(stream_ref)
+                        name_match = re.search(r"\(([\w\d\-\.]+\.xlsx)\)", obj)
+                        filename = name_match.group(1) if name_match else "embedded.xlsx"
+                        return excel_bytes, filename
+            except Exception:
+                pass
+    return None, None
+
+
+# === FUNCTION 2: Extract summary from Excel bytes ===
+def extract_summary_from_excel_bytes(excel_bytes):
+    """
+    Reads merged cell range C39:I41 from Excel binary data.
+    """
+    try:
+        wb = load_workbook(io.BytesIO(excel_bytes), data_only=True)
+        ws = wb.active
+        text_values = []
+        for row in ws.iter_rows(min_row=39, max_row=41, min_col=3, max_col=9):
+            for cell in row:
+                if cell.value:
+                    text_values.append(str(cell.value))
+        text = " ".join(text_values).strip()
+        return text
+    except Exception as e:
+        return f"Error reading Excel: {e}"
+
+
+# === FUNCTION 3: Fallback extraction from PDF text (PyPDF2) ===
+def extract_summary_from_pdf_text(pdf_path):
+    """
+    Fallback if Excel not found — read text and search for summary-like patterns.
+    """
+    try:
+        reader = PdfReader(pdf_path)
+        text = ""
+        for page in reader.pages:
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + " "
+        match = re.search(r"(Account\s+Closeout|Summary\s+of\s+Activity[-:\.]?\s+.+)", text, re.IGNORECASE)
+        if match:
+            return match.group(0).strip()
+        return None
+    except Exception as e:
+        return f"Error reading PDF text: {e}"
+
+
+# === FUNCTION 4: Camelot extraction ===
+def extract_summary_from_pdf_with_camelot(pdf_path):
+    """
+    Uses Camelot to parse PDFs saved from Excel and extract text between
+    'Summary of Activity' and 'ATTACH FILE'.
+    """
     try:
         tables = camelot.read_pdf(pdf_path, pages="all")
     except Exception as e:
@@ -19,16 +91,12 @@ def extract_summary_from_pdf(pdf_path):
         for col in df.columns:
             for cell in df[col]:
                 if isinstance(cell, str) and "Summary of Activity" in cell:
-                    # Split into lines and remove empty ones
                     lines = [line.strip() for line in cell.split("\n") if line.strip()]
-
-                    # Find start and end indexes
                     start_idx = next((i for i, line in enumerate(lines) if "Summary of Activity" in line), None)
                     end_idx = next((i for i, line in enumerate(lines) if "ATTACH FILE" in line), None)
 
-                    # Extract lines between the two markers (exclude both)
                     if start_idx is not None:
-                        start_idx += 1  # start *after* Summary of Activity
+                        start_idx += 1
                         if end_idx is None:
                             extracted = lines[start_idx:]
                         else:
@@ -38,29 +106,47 @@ def extract_summary_from_pdf(pdf_path):
     return None
 
 
-# === MAIN LOOP: iterate through all PDFs in folder ===
+# === MAIN PROCESS ===
 results = []
 
-for file_name in os.listdir(pdf_folder):
-    if file_name.lower().endswith(".pdf"):
-        pdf_path = os.path.join(pdf_folder, file_name)
-        print(f"🔍 Processing: {file_name}")
+for file in os.listdir(pdf_folder):
+    if not file.lower().endswith(".pdf"):
+        continue
 
-        extracted_value = extract_summary_from_pdf(pdf_path)
+    pdf_path = os.path.join(pdf_folder, file)
+    print(f"\n▶ Processing: {file}")
+    summary = None
 
-        if extracted_value:
-            print(f"✅ Extracted: {extracted_value}")
-        else:
-            print(f"⚠️ 'Summary of Activity' not found or no content before 'ATTACH FILE' in {file_name}")
+    # Step 1️⃣: Try to extract embedded Excel
+    excel_bytes, excel_filename = extract_embedded_excel_stream(pdf_path)
+    if excel_bytes:
+        print(f"  ✓ Found embedded Excel: {excel_filename}")
+        summary = extract_summary_from_excel_bytes(excel_bytes)
+        extracted_path = os.path.join(pdf_folder, f"extracted_{excel_filename}")
+        with open(extracted_path, "wb") as f:
+            f.write(excel_bytes)
+        print(f"  💾 Saved attachment as: {extracted_path}")
 
-        results.append({
-            "PDF_File": file_name,
-            "Summary_of_Activity": extracted_value if extracted_value else "Not found"
-        })
+    # Step 2️⃣: If no embedded Excel, try Camelot parser
+    if not excel_bytes:
+        print("  📄 No embedded Excel found — using Camelot parser...")
+        summary = extract_summary_from_pdf_with_camelot(pdf_path)
 
-# === SAVE FINAL RESULTS TO EXCEL ===
-df_results = pd.DataFrame(results)
-df_results.to_excel(output_excel, index=False)
+    # Step 3️⃣: Fallback if nothing found, use text extraction
+    if not summary or summary.strip() == "" or summary.startswith("Error"):
+        pdf_summary = extract_summary_from_pdf_text(pdf_path)
+        if pdf_summary:
+            summary = pdf_summary
 
-print("\n🎯 Extraction complete!")
-print(f"💾 Results saved to: {output_excel}")
+    # Step 4️⃣: Default value if still empty
+    if not summary or summary.strip() == "":
+        summary = "Not found"
+
+    results.append({"PDF_File_Name": file, "Activity_Summary": summary})
+
+
+# === SAVE RESULTS ===
+df = pd.DataFrame(results)
+df.to_excel(output_file, index=False)
+
+print(f"\n✅ Extraction Complete! Results saved to:\n{output_file}")
