@@ -1,5 +1,6 @@
 import camelot
 import os
+import pandas as pd
 
 pdf_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\your_file.pdf"
 output_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
@@ -7,7 +8,40 @@ output_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
 tables = camelot.read_pdf(pdf_path, pages="all")
 
 for i, table in enumerate(tables):
-    df = table.df
-    excel_path = os.path.join(output_folder, f"table_{i+1}.xlsx")
-    df.to_excel(excel_path, index=False)
-    print(f"✅ Saved: {excel_path}")
+    df = table.df.copy()
+
+    # --- STEP 1: Clean up each cell ---
+    def clean_cell(text):
+        if not isinstance(text, str):
+            return text
+        # Replace newlines/tabs with single space
+        text = text.replace('\n', ' ').replace('\t', ' ')
+        # Split by multiple spaces
+        parts = [p.strip() for p in text.split() if p.strip()]
+        # Join with commas or keep as list depending on your goal
+        return parts
+
+    df = df.applymap(clean_cell)
+
+    # --- STEP 2: Flatten lists so each item gets its own column ---
+    expanded_rows = []
+    for _, row in df.iterrows():
+        expanded = []
+        for cell in row:
+            if isinstance(cell, list):
+                expanded.extend(cell)
+            else:
+                expanded.append(cell)
+        expanded_rows.append(expanded)
+
+    # --- STEP 3: Normalize uneven row lengths ---
+    max_len = max(len(r) for r in expanded_rows)
+    for r in expanded_rows:
+        r.extend([""] * (max_len - len(r)))
+
+    clean_df = pd.DataFrame(expanded_rows)
+
+    excel_path = os.path.join(output_folder, f"table_{i+1}_clean.xlsx")
+    clean_df.to_excel(excel_path, index=False, header=False)
+    print(f"✅ Saved cleaned table: {excel_path}")
+
