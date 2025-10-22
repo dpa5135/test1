@@ -6,7 +6,7 @@ import subprocess
 root_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate"  # top-level folder to walk
 master_output = os.path.join(root_folder, "Master_SummaryOfActivity_AllFolders.xlsx")
 
-# Script file names (assumed to be in the same folder as this script)
+# Your two working scripts (must be accessible)
 embedded_script_name = "extract_embedded_excel.py"
 camelot_script_name = "extract_camelot_summary.py"
 
@@ -30,11 +30,11 @@ for base_folder, subdirs, files in os.walk(root_folder):
 
     # === STEP 1: Run embedded Excel extractor ===
     print("▶ Running embedded Excel extraction...")
-    subprocess.run(["python", os.path.join(root_folder, embedded_script_name)], check=False)
+    subprocess.run(["python", os.path.join(base_folder, embedded_script_name)], check=False)
 
     # === STEP 2: Run Camelot parser ===
     print("▶ Running Camelot text extraction for remaining PDFs...")
-    subprocess.run(["python", os.path.join(root_folder, camelot_script_name)], check=False)
+    subprocess.run(["python", os.path.join(base_folder, camelot_script_name)], check=False)
 
     # === STEP 3: Combine results ===
     print("🔗 Combining extracted results...")
@@ -66,25 +66,7 @@ for base_folder, subdirs, files in os.walk(root_folder):
     df_camelot.to_excel(output_combined, index=False)
     print(f"✅ Combined result saved to: {output_combined}")
 
-    # === STEP 4: CLEANUP INTERMEDIATE FILES ===
-    print("🧹 Cleaning up temporary Excel files...")
-    try:
-        # remove temporary output files
-        for temp_file in [file_camelot, file_embedded]:
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-                print(f"  🗑️ Deleted: {os.path.basename(temp_file)}")
-
-        # remove extracted Excel attachments (prefixed with 'extracted_')
-        for f in os.listdir(base_folder):
-            if f.lower().startswith("extracted_") and f.lower().endswith(".xlsx"):
-                os.remove(os.path.join(base_folder, f))
-                print(f"  🗑️ Deleted extracted attachment: {f}")
-
-    except Exception as e:
-        print(f"⚠️ Cleanup failed in {base_folder}: {e}")
-
-    # Append this folder’s result to the master list
+    # Append to master
     all_results.append(df_camelot)
 
 # === FINAL MASTER MERGE ===
@@ -94,5 +76,3 @@ if all_results:
     print(f"\n🎯 Master Summary created for ALL folders:\n{master_output}")
 else:
     print("\n⚠️ No results found in any folder.")
-
-print("\n✨ All subfolders processed successfully!")
