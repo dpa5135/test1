@@ -1,34 +1,13 @@
-import pytesseract
-import pandas as pd
-from PIL import Image
+import camelot
 import os
 
-image_path = r"C:\path\to\page_1.png"
-output_folder = r"C:\path\to\output_folder"
-os.makedirs(output_folder, exist_ok=True)
-
-# Get OCR results with coordinates
-ocr_data = pytesseract.image_to_data(Image.open(image_path), output_type=pytesseract.Output.DATAFRAME)
-
-# Drop empty rows and unnecessary columns
-ocr_data = ocr_data.dropna(subset=['text'])
-ocr_data = ocr_data[['block_num', 'par_num', 'line_num', 'word_num', 'text', 'left', 'top']]
-
-# Group by line to form rows
-grouped = ocr_data.groupby(['block_num', 'par_num', 'line_num'])['text'].apply(lambda x: " ".join(x)).reset_index()
-
-# Save clean version
-grouped.to_excel(os.path.join(output_folder, "structured_text.xlsx"), index=False)
-print("✅ Structured Excel file saved with line-by-line formatting!")
-
-
-
-=======================================
-pip install camelot-py[cv]
-
-import camelot
+pdf_path = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test\your_file.pdf"
+output_folder = r"C:\Users\TAQ7353\UTR\LOB_ActivitySummary_FillingRate\test"
 
 tables = camelot.read_pdf(pdf_path, pages="all")
-tables[0].to_excel(os.path.join(output_folder, "camelot_tables.xlsx"))
 
-
+for i, table in enumerate(tables):
+    df = table.df
+    excel_path = os.path.join(output_folder, f"table_{i+1}.xlsx")
+    df.to_excel(excel_path, index=False)
+    print(f"✅ Saved: {excel_path}")
