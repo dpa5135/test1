@@ -1,1 +1,18 @@
+• First, look for embedded Excel attachments hidden inside the PDF
+ If we find an Excel file
+  → extract the Excel into memory
+  → search the sheet(s) for Summary of Activity and any other target fields
+  → store those extracted values in the output
+
+• If the PDF does not contain embedded Excel
+ → analyze the PDF content directly using something like Camelot or text extraction
+ → locate Summary of Activity inside the PDF text
+ → extract that section until the stopping keyword (e.g. “ATTACH FILE”)
+
+After each PDF is processed, you append the results to a dataset that includes:
+✅ Directory path
+✅ PDF file name
+✅ Extracted values (Summary of Activity, etc.)
+
+Finally, everything rolls up into a nice single Excel/CSV output.
 
