@@ -1,1 +1,8 @@
+# Clean the column in place
+df['CASE_TITL_NM'] = (
+    df['CASE_TITL_NM']
+    .str.replace(r'\.pdf$', '', regex=True)   # remove .pdf at the end
+    .str.replace(r'[\[\]]', '', regex=True)   # remove [ and ]
+    .str.strip()                              # remove any leftover spaces
+)
 
