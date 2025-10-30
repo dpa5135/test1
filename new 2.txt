@@ -1,4 +1,5 @@
-SELECT 
+sql_string_query_DA = '''
+SELECT TOP 20
     q1.as_of_date,
     q1.event_id,
     q1.event_description,
@@ -19,6 +20,5 @@ LEFT JOIN
             case_id
         FROM eczrdkyc.enriched_utr_case_status_details
     ) q2
-ON q1.event_id = q2.event_id
-LIMIT 20;
-
+ON q1.event_id = q2.event_id;
+'''
