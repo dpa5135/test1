@@ -1,1 +1,1 @@
-
+df['col'] = df['col'].str.strip().str.replace(r'\s+', ' ', regex=True)
