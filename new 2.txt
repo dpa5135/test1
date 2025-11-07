@@ -1,1 +1,6 @@
+df['last10'] = df['your_column'].str[-10:]
+
+
+df['last10digits'] = df['your_column'].str.replace(r'\D', '', regex=True).str[-10:]
+
 
