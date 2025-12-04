@@ -1,1 +1,49 @@
+# 1) PyTorch with CUDA (if you don’t already have it)
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+
+# 2) Hugging Face libraries
+pip install "transformers>=4.44.0" "accelerate" "safetensors" "sentencepiece"
+
+
+
+from transformers import AutoTokenizer, AutoModelForCausalLM
+import torch
+
+# Path to the folder where you put config.json + safetensors
+model_dir = r"C:\Models\Llama-3.1-8B-Instruct"
+
+# Load tokenizer
+tokenizer = AutoTokenizer.from_pretrained(
+    model_dir,
+    local_files_only=True,   # do NOT download from internet
+)
+
+# Choose dtype based on your GPU
+dtype = torch.bfloat16 if torch.cuda.is_available() else torch.float32
+
+# Load model (8B should fit on your 24GB GPU in bf16)
+model = AutoModelForCausalLM.from_pretrained(
+    model_dir,
+    torch_dtype=dtype,
+    device_map="auto",       # automatically put on GPU
+    local_files_only=True,
+)
+
+# Simple generation test
+prompt = "You are a helpful assistant. Answer briefly.\nUser: What is machine learning?\nAssistant:"
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=128,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9,
+    )
+
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+
+python run_llama3.py
+
 
