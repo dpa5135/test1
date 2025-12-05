@@ -1,1 +1,43 @@
+from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
+import torch
+
+model_dir = "/cloudfiles/code/Users/Dooman.Akbarian/LLM/Llama-3.1-70B"  # adjust path
+
+# 1) Tokenizer (same as before)
+tokenizer = AutoTokenizer.from_pretrained(
+    model_dir,
+    local_files_only=True,
+)
+
+# 2) 4-bit quantization config
+bnb_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.bfloat16,   # compute in bf16 on GPU
+    bnb_4bit_use_double_quant=True,
+    bnb_4bit_quant_type="nf4",               # good default for LLMs
+)
+
+# 3) Load model in 4-bit with automatic device placement
+model = AutoModelForCausalLM.from_pretrained(
+    model_dir,
+    quantization_config=bnb_config,
+    device_map="auto",        # requires accelerate
+    local_files_only=True,
+)
+
+# 4) Simple test generation
+prompt = "You are a helpful assistant. Answer briefly.\nUser: What is machine learning?\nAssistant:"
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+with torch.no_grad():
+    outputs = model.generate(
+        **inputs,
+        max_new_tokens=128,
+        do_sample=True,
+        temperature=0.7,
+        top_p=0.9,
+    )
+
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+
 
