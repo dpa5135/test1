@@ -1,1 +1,161 @@
+import pandas as pd
+import numpy as np
+from sklearn.feature_extraction.text import TfidfVectorizer
+from textstat import flesch_reading_ease, flesch_kincaid_grade
+
+# ======================================================
+# READABILITY METRICS
+# ======================================================
+def get_readability_metrics(text):
+    return {
+        "reading_ease": flesch_reading_ease(text),
+        "kincaid_grade": flesch_kincaid_grade(text)
+    }
+
+# ======================================================
+# LENGTH RATIO
+# ======================================================
+def get_length_ratio(original, summary):
+    orig_len = len(original.split())
+    summ_len = len(summary.split())
+    return summ_len / orig_len if orig_len > 0 else 0
+
+# ======================================================
+# WORD REPETITION SCORE
+# ======================================================
+def get_repetition_score(text):
+    words = text.lower().split()
+    if len(words) == 0:
+        return 0
+    return 1 - (len(set(words)) / len(words))
+
+# ======================================================
+# N-GRAM REPETITION
+# ======================================================
+def get_ngram_repetition(text, n=3):
+    words = text.lower().split()
+    if len(words) < n:
+        return 0
+    ngrams = zip(*[words[i:] for i in range(n)])
+    ngram_list = [' '.join(ng) for ng in ngrams]
+    return len(ngram_list) - len(set(ngram_list))
+
+# ======================================================
+# TF-IDF KEYWORD EXTRACTION (GLOBAL)
+# ======================================================
+def extract_tfidf_keywords(corpus, top_k=10):
+    """
+    Extracts top-k TF-IDF keywords for each document.
+    Returns a list of keyword sets (one per document).
+    """
+    vectorizer = TfidfVectorizer(stop_words='english')
+    tfidf_matrix = vectorizer.fit_transform(corpus)
+    feature_names = vectorizer.get_feature_names_out()
+
+    keyword_sets = []
+
+    for i in range(tfidf_matrix.shape[0]):
+        row = tfidf_matrix[i].toarray().flatten()
+        top_indices = row.argsort()[-top_k:][::-1]
+        keywords = {feature_names[idx] for idx in top_indices if row[idx] > 0}
+        keyword_sets.append(keywords)
+
+    return keyword_sets
+
+# ======================================================
+# TF-IDF KEYWORD COVERAGE
+# ======================================================
+def tfidf_keyword_coverage(summary, keyword_set):
+    if not keyword_set:
+        return 0
+    summary_words = set(summary.lower().split())
+    matches = [kw for kw in keyword_set if kw in summary_words]
+    return len(matches) / len(keyword_set)
+
+# ======================================================
+# MAIN EVALUATION PIPELINE
+# ======================================================
+def evaluate_llm_outputs(df, top_k_keywords=10):
+    df = df.copy()
+
+    # Ensure text columns are strings
+    df["V_COMMENTS"] = df["V_COMMENTS"].fillna("").astype(str)
+    df["Brief Overview"] = df["Brief Overview"].fillna("").astype(str)
+    df["Description"] = df["Description"].fillna("").astype(str)
+
+    # --------------------------------------------------
+    # Precompute TF-IDF keywords from original narratives
+    # --------------------------------------------------
+    tfidf_keywords = extract_tfidf_keywords(
+        df["V_COMMENTS"].tolist(),
+        top_k=top_k_keywords
+    )
+
+    metrics = []
+
+    # --------------------------------------------------
+    # Per-record evaluation
+    # --------------------------------------------------
+    for i, row in df.iterrows():
+        original = row["V_COMMENTS"]
+        brief = row["Brief Overview"]
+        desc = row["Description"]
+
+        brief_read = get_readability_metrics(brief)
+        desc_read = get_readability_metrics(desc)
+
+        metrics.append({
+            # ----- Brief Overview -----
+            "brief_length_ratio": get_length_ratio(original, brief),
+            "brief_repetition_score": get_repetition_score(brief),
+            "brief_ngram_repetition": get_ngram_repetition(brief),
+            "brief_keyword_coverage": tfidf_keyword_coverage(
+                brief, tfidf_keywords[i]
+            ),
+            "brief_reading_ease": brief_read["reading_ease"],
+            "brief_kincaid_grade": brief_read["kincaid_grade"],
+
+            # ----- Description -----
+            "desc_length_ratio": get_length_ratio(original, desc),
+            "desc_repetition_score": get_repetition_score(desc),
+            "desc_ngram_repetition": get_ngram_repetition(desc),
+            "desc_keyword_coverage": tfidf_keyword_coverage(
+                desc, tfidf_keywords[i]
+            ),
+            "desc_reading_ease": desc_read["reading_ease"],
+            "desc_kincaid_grade": desc_read["kincaid_grade"]
+        })
+
+    metrics_df = pd.DataFrame(metrics)
+
+    # --------------------------------------------------
+    # Combine original data + metrics
+    # --------------------------------------------------
+    evaluated_df = pd.concat([df.reset_index(drop=True), metrics_df], axis=1)
+
+    # --------------------------------------------------
+    # Aggregate summary metrics
+    # --------------------------------------------------
+    summary_metrics = metrics_df.mean().to_frame(name="Average Score")
+
+    return evaluated_df, summary_metrics
+
+# ======================================================
+# RUN
+# ======================================================
+if __name__ == "__main__":
+    # Load your data
+    df = pd.read_excel("input_data.xlsx")  # or .csv
+
+    evaluated_df, summary_metrics = evaluate_llm_outputs(
+        df,
+        top_k_keywords=10
+    )
+
+    # Save outputs
+    evaluated_df.to_excel("llm_evaluation_per_record.xlsx", index=False)
+    summary_metrics.to_excel("llm_evaluation_summary.xlsx")
+
+    print("Evaluation complete.")
+
 
