@@ -1,1 +1,187 @@
++-------+
+| Start |
++-------+
+     |
+     V
++---------------------+
+| SQL Data Preparation |
+| (Extract & Prepare) |
++---------------------+
+     |
+     V
++-----------------------+
+| Extract from Oracle   |
+| (FCT_COMMENTS, DIM RR |
+| STATUS, KDD_CASES)    |
++-----------------------+
+     |
+     V
++-------------------------------+
+| Clean & Standardize SAR Data |
+| (Status: FILED, ACK, E-FILE) |
+| (Ensure Required Fields)      |
++-------------------------------+
+     |
+     V
++---------------------+
+| LLM & Regex Analysis|
++---------------------+
+     |
+     V
++---------------------+   +---------------------+
+| LLM Prompting       |---| Regex Analysis      |
+| (Llama 3.1 8B - AML) |   | (Predefined Keywords|
+| (Role: AML Analyst)   |   |  from SAR Mgmt)   |
++---------------------+   +---------------------+
+     |                      |
+     V                      V
++---------------------+   +---------------------+
+| Generate Overview/  |   | Identify Keywords & |
+| Description (JSON)  |   | Context (Yes/No,   |
+| (Brief & Detailed)   |   | Direct, Context)   |
++---------------------+   +---------------------+
+     |                      |
+     +----------------------+
+              |
+              V
++-----------------------------+
+| Combine LLM & Regex Outputs|
+| (Tabular Format)            |
++-----------------------------+
+     |
+     V
++---------------------------------+
+| Create Tabular Output           |
+| (Reporting Period, Case ID,     |
+| Narrative, Overview, Description,|
+| Keywords, Matches)               |
++---------------------------------+
+     |
+     V
++-----------------------+
+| Initial Data Validation|
+| (Nov 2025 - Full Coverage)|
++-----------------------+
+     |
+     V
++-----------------------+
+| Regex Results Validation|
+| (Manual Sample Review)  |
++-----------------------+
+     |
+     V
++-----------------------+
+| LLM Results Validation|
+| (SAR Managers - Erin/Fred)|
+| (Evidence, Traceability) |
++-----------------------+
+     |
+     V
++----------------------------+
+| Weekly BAU Validation &    |
+| Maintenance (Loop Back)     |
+| (Data Source, Count Check, |
+| LLM Coverage, Pipeline Updates)|
++----------------------------+
+     ^     ^     ^
+     |     |     |
+     +-----+-----+-----+
+     |     |     |
+     +-----------------------+
+     |
+     V
++--------------------------+
+| Share Tabular Data with  |
+| SAR Managers             |
++--------------------------+
+     |
+     V
++-------+
+|  End  |
++-------+
+============
++-------+
+| Start |
++-------+
+     |
+     V
++---------------------+
+| SQL Data Preparation |
++---------------------+
+     |
+     V
++-----------------------+
+| Extract from Oracle   |
++-----------------------+
+     |
+     V
++-------------------------------+
+| Clean & Standardize SAR Data |
++-------------------------------+
+     |
+     V
++---------------------+
+| LLM & Regex Analysis|
++---------------------+
+     |
+     V
++---------------------+   +---------------------+
+| LLM Prompting       |---| Regex Analysis      |
++---------------------+   +---------------------+
+     |                      |
+     V                      V
++---------------------+   +---------------------+
+| Generate Overview/  |   | Identify Keywords/ |
+| Description (JSON)  |   | Context            |
++---------------------+   +---------------------+
+     |                      |
+     +----------------------+
+              |
+              V
++-----------------------------+
+| Combine LLM & Regex Outputs|
++-----------------------------+
+     |
+     V
++---------------------------------+
+| Create Tabular Output           |
++---------------------------------+
+     |
+     V
++-----------------------+
+| Initial Data Validation|
++-----------------------+
+     |
+     V
++-----------------------+
+| Regex Results Validation|
++-----------------------+
+     |
+     V
++-----------------------+
+| LLM Results Validation|
++-----------------------+
+     |
+     V
++----------------------------+
+| Weekly BAU Validation &    |
+| Maintenance (Loop Back)     |
++----------------------------+
+     ^     ^     ^
+     |     |     |
+     +-----+-----+-----+
+     |     |     |
+     +-----------------------+
+     |
+     V
++--------------------------+
+| Share Tabular Data with  |
+| SAR Managers             |
++--------------------------+
+     |
+     V
++-------+
+|  End  |
++-------+
+
 
