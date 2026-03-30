@@ -1,1 +1,25 @@
+Career Interests
+I am interested in continuing to grow within TD in data science roles that expand my impact in machine learning, AI, and financial crime analytics. In the near term, I aim to deepen my technical expertise and take on greater ownership of analytical solutions. Over time, I am interested in progressing into a Lead Data Scientist role where I can contribute to technical leadership, mentor others, and help drive strategic analytics initiatives.
+
+I am interested in continuing to grow within TD in roles that expand my impact in data science, machine learning, and AI-driven decision support, particularly within financial crime analytics.
+In the near term, I aim to take on greater ownership of analytical initiatives and contribute more actively to solution design, stakeholder engagement, and technical direction. Over time, I am interested in progressing into a Lead Data Scientist role where I can provide technical leadership, mentor others, and help drive high-impact, strategic analytics initiatives across the organization.
+Development Objective
+Develop toward a Lead Data Scientist role by strengthening my technical leadership, stakeholder influence, and ability to independently drive high-impact analytics initiatives.
+
+Additional Information
+At this stage in my role, I am focused on building a strong foundation in TD’s data environment, business processes, and financial crime analytics domain, while consistently delivering high-quality analytical work.
+I have been taking on increasing ownership of key initiatives, including leading workstreams such as UTR and Significant SAR Review enhancement. Through this work, I have been developing my ability to apply machine learning and analytics to real business problems, communicate insights effectively, and contribute to improving decision-making processes.
+As I continue to grow, I am intentionally working toward strengthening my ability to drive projects end-to-end, influence stakeholders, and contribute to technical direction. I am also focused on expanding my impact by taking on more responsibility in solution design and execution.
+Over the next 6–12 months, my goal is to continue operating at an increasingly independent level and build the skills required to take on broader leadership responsibilities, positioning myself for future progression into a Lead Data Scientist role.
+Skills to Develop
+•	Stakeholder communication 
+•	End-to-end project ownership 
+•	Business problem translation into ML solutions 
+•	Model interpretability and governance 
+•	Technical leadership fundamentals 
+•	Financial crime domain expertise
+
+Status Note
+Actively building foundational knowledge of TD’s data, systems, and business processes while expanding ownership through key analytics initiatives. Currently leading workstreams and continuing to develop skills in stakeholder communication, problem-solving, and end-to-end solution delivery, with a focus on growing into greater independence and leadership responsibility over time.
+
 
