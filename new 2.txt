@@ -1,1 +1,4 @@
-
+The meeting was a knowledge-sharing session focused on maximizing productivity with GitHub Copilot.
+D presented a deep dive into the tool, covering available models (basic, premium), operational modes (ask, add, agent, plan), and best practices for efficient token usage. Key takeaways included consolidating prompts for cost-effectiveness, prioritizing responsible Al use (avoiding confidential data), and leveraging the agent mode for complex tasks.
+The discussion also highlighted a company-wide push toward Al adoption, aligning with the CEO's agenda.
+Participants discussed compliance concerns around data usage with Copilot and the importance of confirming acceptable practices with the compliance team. A follow-up survey will be conducted to assess team adoption and encourage wider use of the tool. The session emphasized that Copilot aims to make programming skills less of a barrier, allowing team members to focus on innovation and problem-solving.
