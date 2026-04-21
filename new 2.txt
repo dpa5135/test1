@@ -1,1 +1,16 @@
-
+• Initially internal (including Scott & his reports) and external (STAR review team).
+• Total number of users:
+• Estimated 2000-2500 SAR reports monthly, 700 weekly.
+• Features in the Dashboard:
+• Not fully defined. Desire for interactive features, visualizations, and analysis beyond just reporting. Flexibility is desired for future enhancements.
+• It's unclear if all users will have the same access to all features, or if roles will exist.
+• Views & Interactivity:
+• Potential for multiple tabs/views, similar to an existing KYC dashboard. Extent of other views beyond the initial SAR review function is yet to be scoped. Phased deployments are envisioned.
+• Actions a user can take:
+• Currently, users may copy/paste data from reports into workflows. Future functionality (exporting, searching, customization) is not yet defined.
+• Visualization:
+• Desire for Power Bl or similar tools.
+• Data feeds and refresh rates:
+Data sources include data from Rachuna and potentially an OpenAl APl.
+• Aim for daily data refresh, currently running weekly.
+• Transitioning from offset to hummingbird as the data source. SAR structure in hummingbird is currently unknown.
