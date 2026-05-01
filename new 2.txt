@@ -1,1 +1,23 @@
+"I'm working with a database and have the following SQL queries (provided below).  I need to understand which tables and columns are being accessed.  Please:
+
+1.  Extract a list of all unique table names used in the queries.
+2.  For each table, list all the columns referenced within those queries.
+3.  Present the results in a table format, with columns 'Table Name' and 'Column Names'.  If a column appears in multiple queries referencing the same table, list it only once for that table.
+
+[PASTE SQL QUERIES HERE]"
+
+==================
+
+"I have a set of complex SQL queries (provided below) used for a data analysis project. I need a comprehensive list of the tables and columns involved. Please follow these steps:
+
+1.  **Parse each SQL query:** Identify all `FROM` and `JOIN` clauses to determine the tables used.
+2.  **Extract Column Names:** Identify all columns referenced in `SELECT`, `WHERE`, `GROUP BY`, `ORDER BY`, and `JOIN` clauses.
+3.  **Deduplication:**  For each table, list only *unique* column names. Avoid listing the same column multiple times if it appears in several queries referencing the same table.
+4.  **Output Format:** Create a table with the following columns:
+    *   `Table Name`
+    *   `Column Names` (as a comma-separated list or a bulleted list)
+
+[PASTE SQL QUERIES HERE]
+
+Please provide the output in a markdown table format for easy readability."
 
