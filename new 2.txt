@@ -1,1 +1,16 @@
+Meeting Minutes - May 5, 2026
+Meeting Overview:
+Discussion regarding the implementation of AI for significance assessment, feedback on initial outputs, and data extraction for rejected SARs. The meeting focused on refining the AI process through incorporating both checkbox data and keywords, validating the model, and providing access to rejected SAR data.
+
+Action Items:
+
+Share Updated Keyword List: Aaron will share a list of additional keywords to be added to the AI system.
+Add Star Types as Columns: The team will add “star types” as additional columns in the data list for review and accuracy checking.
+Provide Feedback on Documentation: Aaron will review shared documentation regarding technical details of the model and provide feedback via email once keyword lists are updated.
+Provide Sample Rejected SAR Data: The team will provide a sample file extracted from the database using a specific SAR ID, matching the format in a previously shared Excel file.
+Expand SAR Data Extraction: Following approval of the sample, the team will expand data extraction to include all rejected SARs.
+Schedule Follow-up Meeting: Maintain a bi-weekly meeting cadence for continued feedback and updates.
+Notes:
+
+Initial AI phase focused on keyword coverage, with checkboxes to be incorporated for a more comprehensive approach. Aaron highlighted that the AI is useful for identifying potential issues not captured by keywords. The team will share basic statistics weekly regarding the number of reviews received. Model validation requires 50+ randomly sampled examples weekly with satisfactory/unsatisfactory classifications. Training material regarding LM review criteria will be shared with the team. Aaron has preliminary findings regarding tables in Oracle SQL containing rejected SAR data.
 
