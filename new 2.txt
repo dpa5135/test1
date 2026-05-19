@@ -1,19 +1,1 @@
-Meeting Minutes - May 19, 2026
-Meeting Overview:
 
-This meeting focused on updates regarding the Star Intelligence Tool (formerly known as SAR intelligence tool), including model design, prompting strategy, evaluation metrics, and updates to the SARS category and subcategory data. The team discussed the implementation of new columns in the weekly report to improve review processes.
-
-Action Items:
-
-Confirm team awareness of large language model risks and plan for attestation (either during this session or a separate one).
-Investigate updating the keyword search algorithm to better identify cases involving TDA employees, minimizing false positives.
-Duman to send list of questions regarding SAR category/subcategory logic in meeting minutes.
-Include the new SAR category and subcategory columns in next week’s report.
-Aaron to reply to email confirming team assessment of LLM output using the new evaluation metrics (factual alignment, relevance, completeness, clarity, usability, consistency).
-Notes:
-
-The tool is now called "Star Intelligence Tool" with expanded scope. The model uses LAMA 2.1 with 8 billion parameters, hosted locally for data security. It utilizes a prompt-based approach to generate summaries, focusing on factual information and avoiding invention. Reviewers should verify the accuracy of all factual fields in the generated summaries.
-
-Acceptance criteria for summaries are: Satisfactory or Moderate (useable), Unsatisfactory (not useable). New columns have been added for SAR category and subcategory to aid review and filtering. The team is focused on improving the results delivery process, and the addition of new columns to the next report will not disrupt current processes.
-
-Some SAR subcategories (e.g. illegal logging, real estate fraud) are rare. CMLN subcategory should be captured. The goal is to simplify the review process for model validation.
