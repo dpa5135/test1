@@ -1,18 +1,1 @@
-Meeting Minutes - June 2, 2026
-Meeting Overview:
 
-This meeting served as an update on the BAU delivery, specifically focusing on keyword and SAR category review for AI model accuracy. Discussion also included refining the AI's ability to identify nuanced cases like human and elder exploitation, and plans for ongoing model validation and development.
-
-Action Items:
-
-AI Model Attestation: Aaron will provide attestation confirming team review and understanding of model risks. Deadline: This morning.
-Review Highlighted Cases: Speaker 1 to review the cases highlighted by Speaker 2 and provide comments on reasoning behind classifications (human trafficking, exploitation, etc.).
-Investigator Involvement: Explore involving investigators in future AI training to improve nuanced case identification.
-MRM Approval Notification: Update will be provided once MRM (Model Risk Management) approval is received for AI results release, enabling continued production development for the platform.
-Notes:
-
-Keyword updates have resulted in a 99% pass rate for satisfactory reviews, with 7 cases requiring further review. Challenges remain in identifying nuanced cases (human/elder exploitation) where key terms are absent from narratives. Emphasis was placed on the importance of investigators using specific language (e.g., "unlicensed MSB activity") to improve AI detection.
-
-SAR categories and subcategories are proving useful in identifying cases not caught by keywords. Consistency of suspicious activity is a key factor in identifying potential exploitation cases. The team acknowledged that 100% accuracy is difficult to achieve due to the dynamic nature of the data but is aiming for ongoing improvement.
-
-Keyword Review & Satisfaction: It was clarified that a keyword review should be considered satisfactory if a case is captured by either relevant keywords or a significant SAR category/subcategory. Column P will be used to flag cases falling outside of both detection methods.
