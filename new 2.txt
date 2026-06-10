@@ -1,1 +1,176 @@
+# =====================================
+# 4) Prompt template
+# =====================================
 
+SYSTEM_PROMPT = """
+Role:
+You are an Anti-Money Laundering analyst. Your task is to summarize the reason of filing the SAR given SAR narrative for senior management.
+
+Rules:
+1. Use only the input SAR narrative from AML investigator; do not invent or assume any other information.
+2. Try to use original SAR narrative text when possible.
+3. Keep the summary specific without generic or redundant information.
+4. Return valid JSON only.
+5. Do not include markdown fences.
+6. If the narrative is unclear, still summarize only what is explicitly stated.
+
+Output JSON format:
+
+{
+  "Brief Overview": "One sentence summarizing what TD Bank is filing this SAR for.",
+  "Description": "Provide an explanation of what seems suspicious and why TD Bank is filing this SAR. Keep explanation specific without generic or redundant information."
+}
+"""
+
+def build_user_prompt(narrative: str) -> str:
+    return f"""
+Summarize the following SAR narrative.
+
+SAR Narrative:
+\"\"\"
+{narrative}
+\"\"\"
+
+Return only valid JSON in exactly this structure:
+{{
+  "Brief Overview": "...",
+  "Description": "..."
+}}
+"""
+
+# =====================================
+# 5) Helper: clean and parse JSON safely
+# =====================================
+
+def clean_model_output(text: str) -> str:
+    """
+    Removes markdown code fences if the model returns them accidentally.
+    """
+    if text is None:
+        return ""
+
+    text = text.strip()
+
+    # Remove ```json ... ``` or ``` ... ```
+    text = re.sub(r"^```json\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"^```\s*", "", text)
+    text = re.sub(r"\s*```$", "", text)
+
+    return text.strip()
+
+
+def parse_summary_json(raw_text: str) -> dict:
+    """
+    Attempts to parse model output into JSON.
+    Returns fallback values if parsing fails.
+    """
+    cleaned = clean_model_output(raw_text)
+
+    try:
+        data = json.loads(cleaned)
+
+        brief = data.get("Brief Overview", "")
+        desc = data.get("Description", "")
+
+        return {
+            "Brief Overview": brief.strip() if isinstance(brief, str) else "",
+            "Description": desc.strip() if isinstance(desc, str) else ""
+        }
+
+    except Exception:
+        # fallback if JSON parsing fails
+        return {
+            "Brief Overview": "",
+            "Description": f"JSON parsing failed. Raw output: {cleaned}"
+        }
+
+
+# =====================================
+# 6) Function to call model for one narrative
+# =====================================
+
+def summarize_sar_narrative(
+    narrative: str,
+    model_name: str = "YOUR-DEPLOYMENT-NAME",
+    temperature: float = 0.1,
+    max_retries: int = 3
+) -> dict:
+    """
+    Send one SAR narrative to the model and return parsed JSON result.
+    """
+
+    if pd.isna(narrative) or not str(narrative).strip():
+        return {
+            "Brief Overview": "",
+            "Description": ""
+        }
+
+    user_prompt = build_user_prompt(str(narrative))
+
+    last_error = None
+
+    for attempt in range(max_retries):
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=temperature
+            )
+
+            raw_output = response.choices[0].message.content
+            return parse_summary_json(raw_output)
+
+        except Exception as e:
+            last_error = str(e)
+            # small retry pause
+            time.sleep(1)
+
+    return {
+        "Brief Overview": "",
+        "Description": f"Model call failed after retries: {last_error}"
+    }
+
+
+# =====================================
+# 7) Apply to the dataset
+# =====================================
+
+results = []
+
+for idx, narrative in enumerate(df["Narrative_Text"], start=1):
+    result = summarize_sar_narrative(
+        narrative=narrative,
+        model_name="YOUR-DEPLOYMENT-NAME",   # change this
+        temperature=0.1
+    )
+
+    results.append(result)
+
+    # progress log for Databricks
+    print(f"Processed row {idx}/{len(df)}")
+
+# Convert results to DataFrame
+summary_df = pd.DataFrame(results)
+
+# Add columns into original dataset
+df["Brief_Overview"] = summary_df["Brief Overview"]
+df["Description"] = summary_df["Description"]
+
+
+display(df.head())
+
+# =====================================
+# 8) Save enriched dataset
+# =====================================
+
+output_csv_path = "/dbfs/FileStore/sar_mock_data_enriched.csv"
+output_excel_path = "/dbfs/FileStore/sar_mock_data_enriched.xlsx"
+
+df.to_csv(output_csv_path, index=False)
+df.to_excel(output_excel_path, index=False, engine="openpyxl")
+
+print(f"Saved CSV to: {output_csv_path}")
+print(f"Saved Excel to: {output_excel_path}")
