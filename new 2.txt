@@ -1,1 +1,17 @@
+Meeting Minutes - June 30, 2026
+Key Discussion Points:
+The meeting focused on updates regarding the development of a web application for displaying and interacting with STAR reports. Currently, results are delivered in Excel. The goal is to transition to a web application offering search functionality, AI summaries, and direct feedback submission.
+Action Items:
+•	Task: Duman is developing a web application for STAR report intelligence use case.
+•	Task: Share significant STAR list updates via email to request updates to the web application/reports. Expect a response/update within a day or two.
+•	Task: Speaker 1 will review the seven cases sent previously and provide feedback this afternoon.
+•	Task: Refine web application based on team feedback and incorporate updates into the next weekly VAU.
+Notes:
+•	The web application will initially be a locally hosted testing version, with a long-term goal of hosting it as a public website.
+•	The initial web app is envisioned as an interactive dashboard.
+•	Adding new significant SAR categories to the web app currently requires a request and development time, but future iterations aim to allow users to add categories directly through the interface.
+•	Changes to the underlying process of generating STAR reports will require updates to the web application.
+•	A demo session will be scheduled once the web application is further developed to gather team feedback.
+•	The team expressed satisfaction with current results.
+
 
