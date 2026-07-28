@@ -1,1 +1,164 @@
+What I would say to Jesse tomorrow
 
+I wouldn't start with "I missed the deadline." Start with your interest.
+
+Something like:
+
+"Jesse, there's one thing I wanted to discuss with you. I spoke with Phyllis yesterday about my career goals and my interest in growing into a leadership role. She mentioned that her Senior Manager position had been posted and encouraged me to talk with you about it. I looked at the position, and I'm definitely interested in being considered for it."
+
+Then bring up the closed posting:
+
+"It looks like the application window has already closed, so I wasn't able to apply through the system. Phyllis suggested that I talk with you first and see whether there might still be an opportunity for me to be considered through HR. I'd really appreciate your thoughts."
+
+Then stop and let Jesse answer.
+
+I would not immediately launch into a five-minute argument for why you're qualified. Give him an opportunity to react.
+
+If Jesse asks, "Why do you think you're ready?"
+
+That's when you make your case.
+
+And now that I've seen the actual job description, I'd tailor your answer to the posting rather than speaking generally about leadership:
+
+"Over the past year, I've been taking increasing ownership of projects like SAR Intelligence and UTR. I've been independently leading technical work, coordinating with stakeholders, managing deliverables, and identifying opportunities for GenAI and LLM solutions. I've also really enjoyed the leadership side of that work. I know moving into Senior Manager would be a significant step and there are areas I'd continue developing, particularly people management and managing multiple priorities across the team, but I think my technical background, project leadership, knowledge of our team and FCRM work, and the continuity I can provide make it worth considering me for the role."
+=========================================
+1. Why are you interested in this role?
+
+This is probably the most likely opening.
+
+A good answer is:
+
+"Over the past year I've really enjoyed not only the technical side of my work, but also leading projects, working with stakeholders, and helping drive ideas from concept to implementation. I enjoy coordinating with different teams and communicating with management. I feel the next step in my career is to take on broader leadership responsibilities, where I can contribute not only technically but also by helping the team succeed."
+
+Notice what you're not saying:
+
+❌ "I want a promotion."
+
+Instead:
+
+✅ "I enjoy leadership."
+
+2. Why do you think you're ready?
+
+This is probably the hardest question.
+
+I'd structure it into three parts.
+
+"I think there are three reasons.
+
+First, I've demonstrated that I can independently lead technically complex projects. For example, I've been leading the SAR Intelligence initiative and the UTR work, driving technical design, implementation, and communication with stakeholders.
+
+Second, I've built strong relationships across the team and with management. I've enjoyed presenting ideas, discussing improvements, and working closely with business partners.
+
+Third, I understand there are areas where I still have room to grow—particularly managing multiple competing priorities across a team and formal people management—but I'm excited to continue developing those skills."
+
+That answer is much stronger than pretending you already know everything.
+
+3. What do you think a Senior Manager does that's different from a Data Scientist?
+
+This question separates people who want a title from people who understand leadership.
+
+I'd answer:
+
+"I think the biggest difference is that success is measured less by your own technical contributions and more by enabling the success of the team.
+
+That includes setting priorities, removing obstacles, helping people develop, communicating with stakeholders, making trade-offs, and making sure projects deliver business value."
+
+That shows you understand the role isn't "doing more coding."
+
+4. What's your biggest weakness or biggest gap?
+
+Don't say:
+
+"Nothing."
+
+Instead:
+
+"The biggest area I want to continue developing is managing multiple priorities across several projects and people simultaneously.
+
+Most of my experience has been leading one or two major initiatives at a time.
+
+During this transition I'd welcome opportunities to coordinate more work across the team because I think that's the next important skill for me."
+
+That's almost exactly what Phyllis mentioned as your primary growth area.
+
+5. Why should we choose you instead of hiring someone externally?
+
+This is probably the most important question.
+
+I'd answer something like:
+
+"An external candidate may bring experience from another organization, which can certainly be valuable.
+
+What I bring is a deep understanding of our team's work, our projects, our stakeholders, and the technical challenges we're solving.
+
+I've already built relationships with the team and management, and I can provide continuity during this transition while continuing to grow as a leader."
+
+Notice:
+
+You are not criticizing external candidates.
+
+You're simply explaining your unique strengths.
+
+A bonus question
+
+I think Jesse may ask:
+
+"What would your priorities be during your first 90 days?"
+
+I'd keep it simple.
+
+"First, I'd make sure the team's ongoing projects continue without disruption during the transition.
+
+Second, I'd focus on successfully onboarding the new data scientists and helping them become productive.
+
+Third, I'd continue building the SAR Intelligence initiative and other strategic projects while maintaining strong communication with stakeholders.
+
+Finally, I'd spend time understanding where the team can improve its processes and identifying opportunities to create more business value."
+========================================================
+what's your management skills? And do you have any management skills? What should I say?
+
+This is actually one of the most important questions he could ask.
+
+The biggest mistake would be trying to convince Jesse that you've already managed people if you haven't. He already knows your role and experience, so overstating it would likely weaken your credibility.
+
+Instead, answer in a way that highlights the leadership skills you have developed.
+
+For example:
+
+"I haven't had formal people-management responsibility yet, such as performance reviews or managing direct reports. However, I have developed many of the leadership skills that are important for management. I've led technically complex projects, coordinated with stakeholders across teams, presented ideas to management, communicated project status, driven initiatives like SAR Intelligence, and helped move projects from concept to implementation. I enjoy mentoring and collaborating with others, and I'm excited to continue developing the formal people-management aspects of leadership."
+
+If he asks a follow-up like, "Can you give me an example?", you could say:
+
+"For example, with the SAR Intelligence project, I've been driving the technical direction, coordinating with different stakeholders, presenting progress, addressing feedback, and working through challenges like data security and architecture. That experience has taught me how to align technical work with business goals and keep projects moving forward."
+
+You can also mention something Phyllis told you:
+
+"Phyllis has trusted me to lead the SAR Intelligence initiative and encouraged me to continue leading it after her departure."
+
+If he asks, "So why do you think you can be a manager without management experience?"
+
+A good answer is:
+
+"I think everyone has a first management role at some point. My goal isn't to claim that I already know everything about managing people. My goal is to build on the leadership skills I've already demonstrated—technical leadership, communication, stakeholder management, ownership, and problem-solving—while learning the formal aspects of people management from experienced leaders."
+
+
+
+
+============================================================================
+============================================================================
+Meeting Overview
+This meeting appears to be a regular check-in (bi-weekly) regarding a tool implemented to improve SARS (Suspicious Activity Reports) processing and reporting. The discussion centers around the tool's effectiveness, ongoing collaboration with the OCC (Office of the Comptroller of the Currency), and data reconciliation challenges. A key topic is the transition following the departure of a team member (Phyllis) and ensuring project continuity. The overall tone is positive, focusing on improvements and proactive problem-solving.
+
+Main Items Discussed
+Here's a breakdown of the main items discussed during the meeting:
+
+Transition after Phyllis's Departure: Speaker 2 addressed Phyllis leaving and assured the team they are actively hiring a replacement while maintaining project momentum. They emphasized continued support during this transition.
+Tool Performance & Benefits: Speaker 1 highlighted the positive impact of the new tool, noting increased efficiency, reduced manual workload, and the ability to provide more detailed feedback on SARS. They've seen a significant increase in the number of SARS reviewed.
+OCC Validation & Communication: The team discussed receiving validation from the OCC regarding the tool's alignment with MRA (Model Risk Assessment) 6R standards. They agreed on a strategy for communicating with the OCC, emphasizing automation, efficiency gains, and avoiding potential discrepancies in messaging.
+Future Development - "Sign Intelligence Framework": Speaker 2 outlined plans to integrate the current tool into a broader "Sign Intelligence Framework" with features like automated SARS topic identification and a user-friendly interface for data analysis.
+Significant SARS List & Keyword Review: Speaker 1 provided an update on the "Significant SARS List," noting an increasing keyword pass rate.
+Data Reconciliation Issues: A significant portion of the meeting was dedicated to resolving discrepancies between SARS data in the tool and data in Oracle (likely a primary data source). Specifically:
+Mismatched case IDs and Oracle report numbers (potentially due to SARS corrections/amendments).
+Instances of terms appearing in the SARS list that aren't present in Oracle.
+Next Steps & Meeting Schedule: The meeting concluded with confirming the bi-weekly schedule and wrapping up the current series of check-ins.
