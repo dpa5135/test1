@@ -1,10 +1,1 @@
-Meeting Overview
-This meeting appears to be a recurring check-in regarding a project involving AI-generated responses, specifically related to SARS (likely a reporting category) and keyword review pass rates. The participants are discussing the accuracy and refinement of the AI model, data reconciliation with an Oracle report, and a recent validation of their significant star reporting by the USCC. A new team member, Calvin, is being onboarded to assist with reviewing reports and identifying false positives.
 
-Main Items Discussed
-Introduction of Calvin: Calvin is joining the team to assist with reviewing reports, identifying false positives, and providing feedback on the AI model's outputs. He reports to Fred.
-AI Model Refinement - Minor Tweaks: Speaker 1 notes the AI summaries are generally good but contain some unnecessary information. They are exploring potential tweaks to the information the model pulls, but don't see immediate issues.
-Keyword Review Pass Rates: The team achieved a 98% pass rate in June and 100% in July for keyword reviews, indicating successful capture of necessary information.
-Data Reconciliation - Case/Report ID Mismatch: There was a discrepancy of approximately 30 cases between a recent data set and the Oracle report. The root cause appears to be mismatched or missing Oracle report IDs due to amended SARS cases. The team will investigate further, focusing on using the Oracle report number for accurate matching.
-USCC Validation of MRA (Significant Star Reporting): The team received validation from the USCC for their significant star reporting. This validation is expected to reduce the need for ongoing communication with the OCC (Overseas Clearing Corporation) regarding updates and processes.
-Future Team Expansion: The team is actively hiring, indicating potential for increased AI involvement in the area.
