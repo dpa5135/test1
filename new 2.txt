@@ -1,1 +1,12 @@
+Meeting Overview
+This meeting was a check-in regarding a pilot program involving an AI model for analyzing SARS (Suspicious Activity Reports). The primary focus was on the status of the pilot, the path to validation, and potential expansion of the model's capabilities and data access. A significant portion of the meeting was initially consumed by technical difficulties with Windows updates and Teams connectivity. A new feature – the inclusion of prior SARS information in the delivered data – was also discussed, with initial feedback indicating some potential false positives related to fraud SARS.
 
+Main Items Discussed
+Technical Issues: Participants experienced connectivity problems with Windows updates and the Teams platform, causing disruptions at the beginning of the meeting.
+Pilot Program Status: Discussion centered around the current state of the AI model pilot, including the transition towards validation and a potential timeline for full implementation (estimated early next year).
+Validation Process: The complexities of validating an AI model, particularly regarding regulatory requirements (CRA process) and model risk, were highlighted.
+Expansion of Capabilities/Data Access: There was discussion about broadening the use of the AI model to other areas within FCRM and potentially expanding access to backend data to address reporting needs.
+New Feature - Prior SARS Information: A new feature adding prior SARS data to the delivered information was presented. Initial feedback identified potential false positives, particularly with fraud-related SARS, requiring further investigation and potential refinement of the filtering logic.
+Cloud Deployment: The benefits of moving the AI model to a cloud environment (automation, control, easier updates) were discussed, with a potential announcement planned upon successful migration.
+Collaboration & Feedback Loop: The team emphasized a collaborative approach, suggesting a shared document or platform for ongoing feedback and refinement of the model and its capabilities.
+Next Steps: Scheduling a follow-up meeting with Lauren to provide an overview of the AI model and explore potential applications within her organization; and continuing to refine the prior SARS information feature based on feedback.
