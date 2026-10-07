@@ -1,1 +1,55 @@
+List of Questions for Robert
+Here's a comprehensive list of questions to send to Robert, based on the meeting transcript. They are grouped for clarity:
 
+I. Overall Purpose & Context:
+
+What is the primary end user of these reports?
+What is the overall purpose of these reports? What business questions are they intended to answer?
+Can you describe the overall workflow this report supports?
+II. Data & Defect Definition:
+
+How are “defects” defined in this context? What characteristics qualify something as a defect?
+Where does the data originate? Specifically, can you detail the source of the data within the QC management dashboard?
+Is there a formal definition document or data dictionary that describes the fields in the underlying data?
+Are there any specific rules or logic applied to identify and categorize these defects?
+III. Data Breakdown & Relationships:
+
+Why is it important to break down the defect analysis by full-time employee versus contractor? What insights are you hoping to gain from this separation?
+Is there another table that contains information about employee/contractor status that needs to be joined with the existing data?
+What do the Tier 1 and Tier 2 categories represent? How do they differ?
+IV. Technical Details:
+
+Can you provide more details on how the calculations are currently being performed in the Tableau dashboard?
+Are there any specific calculations or transformations applied to the data before it's presented in the current table format?
+Draft Email to Robert
+Subject: Clarification for Data Analysis Request - QC Report
+
+Dear Robert,
+
+Hope you are having a good week.
+
+Following up on our conversation with Jesse, we’re eager to move forward with your request for the data analysis and report generation. To ensure we fully understand the requirements and can deliver the most accurate and useful results, we have a few clarifying questions:
+
+Regarding the Overall Purpose:
+
+What is the primary end user of these reports?
+What is the overall purpose of these reports? What business questions are they intended to answer?
+Can you describe the overall workflow this report supports?
+Regarding the Data & Defects:
+
+How are “defects” defined in this context? What characteristics qualify something as a defect?
+Where does the data originate? Specifically, can you detail the source of the data within the QC management dashboard?
+Is there a formal definition document or data dictionary that describes the fields in the underlying data?
+Are there any specific rules or logic applied to identify and categorize these defects?
+Regarding Data Breakdown & Relationships:
+
+Why is it important to break down the defect analysis by full-time employee versus contractor? What insights are you hoping to gain from this separation?
+Is there another table that contains information about employee/contractor status that needs to be joined with the existing data?
+What do the Tier 1 and Tier 2 categories represent? How do they differ?
+Regarding Technical Details:
+
+Can you provide more details on how the calculations are currently being performed in the Tableau dashboard?
+Are there any specific calculations or transformations applied to the data before it's presented in the current table format?
+We appreciate you taking the time to answer these questions. Jesse and I will review your responses before proceeding, and we may follow up with further questions if needed.
+
+Thank you for your cooperation
