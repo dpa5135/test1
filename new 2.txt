@@ -1,1 +1,194 @@
 
+I would like you to perform a thorough fact-check and accuracy review of the four-page document you previously generated, titled **"General AI Governance and MRM Workflow."**
+
+For now, keep this document **general and applicable to TD's Enterprise AI Governance and Model Risk Management processes**. Do not customize it for a specific project or use case.
+
+You previously had access to the TD internal reference documents, including:
+
+- Enterprise AI Governance FAQ (July 2026)
+- AI Risk Governance Pathways
+- Enterprise Minimal Model Risk Guideline v1
+- Minimal Model Risk Intake Questionnaire Template v1
+- MRMGE Minimal Risk User Guide
+- IBM OpenPages MRMGE User Guide 2026
+- Other applicable Enterprise AI Governance and MRM standards
+
+**Your task is to independently verify the accuracy of the document against these original sources, rather than assuming your earlier summary was correct.**
+
+### 1. Verify the relationship between AI Governance and MRM
+
+Confirm whether the document correctly explains that Enterprise AI Governance and MRM are separate but interconnected processes.
+
+Specifically verify:
+
+- Whether the two intake and assessment processes can proceed independently or in parallel.
+- Whether AI Governance outcomes can trigger MRM or other domain assessments.
+- Whether MRM risk classification influences AI Governance requirements, or vice versa.
+- Whether completing one process affects or eliminates obligations under the other.
+
+Provide exact supporting references.
+
+### 2. Verify the Minimal AI Governance pathway
+
+On page 1, the document states:
+
+"Minimal Governance is an AI pathway associated with a controlled PoC and specified restrictions."
+
+Please verify:
+
+- Is "Minimal" an official Enterprise AI Governance pathway?
+- Is it specifically limited to controlled proofs of concept (PoCs)?
+- What are its eligibility requirements and restrictions?
+- How is Minimal AI Governance different from Minimal Model Risk under MRM?
+- Are the listed AI Governance pathways (Minimal, Standard, Moderate, Material, Enhanced, and Prohibited) correct and complete?
+
+Cite the exact source and relevant section or page for each answer.
+
+### 3. Verify when the Enterprise AI Intake must be submitted
+
+On page 1, the document says the intake must be submitted before development, procurement, implementation, or deployment.
+
+Please confirm:
+
+- Is this requirement accurate?
+- At what point in the AI lifecycle is intake officially required?
+- How does the process apply to AI solutions already under development or already registered?
+- Are there different requirements for PoCs, development, testing, and production deployment?
+
+Please distinguish mandatory policy requirements from recommended practices.
+
+### 4. Verify Minimal Model Risk eligibility criteria
+
+On page 2, the document states that a Minimal Risk candidate must qualify under a permitted use case and must neither impact humans nor be impactful to a critical business process.
+
+Please verify:
+
+- Are these the exact eligibility requirements?
+- What are the official qualifying-use-case categories?
+- What constitutes human impact?
+- What constitutes a critical business process?
+- Does the requirement that inadequate output cause only negligible risk accurately reflect the guideline?
+- Are human oversight and the ability to correct or override outputs mandatory conditions for every qualifying use case, or only certain categories?
+
+Identify any missing eligibility criteria, exclusions, or important exceptions.
+
+### 5. Verify the MRMGE submission procedure
+
+On page 2, the document states that a new Minimal Risk candidate must:
+
+- Register the Model Version and associated usages in MRMGE.
+- Set preliminary Materiality and Criticality to N/A with the comment "Refer to Minimal Risk Questionnaire."
+- Attach the completed questionnaire to the Risk Rating Value object.
+- Submit the model for triage.
+
+Please verify every instruction against the official MRMGE Minimal Risk User Guide.
+
+Also confirm:
+
+- Which workflow applies to newly registered models?
+- Which workflow applies to existing models requesting reclassification to Minimal Risk?
+- How should an existing model with a pending or undetermined risk rating be handled?
+- Is Model Sponsor attestation mandatory?
+- Are additional approvals, documents, or system steps required?
+
+Include exact page or slide references.
+
+### 6. Verify who determines the final Minimal Risk classification
+
+The document states that MRM reviews the submission and that the final Minimal Risk determination resides with AVP, Model Validation.
+
+Please confirm:
+
+- Is this the correct approval authority?
+- What are the responsibilities of the Model Owner, Model Sponsor, Model Developer, MRM, and Model Validation?
+- Is FRCB human-impact confirmation required for US-impacting models, and under what circumstances?
+- Are there other required approvals or sign-offs?
+
+Provide references to the official documents.
+
+### 7. Verify requirements after Minimal Risk approval
+
+On page 3, the document states that approved Minimal Risk models:
+
+- Do not require formal model validation or annual model review.
+- Must complete and maintain a Minimal Risk MDR.
+- Must maintain output-focused performance testing and business-approved acceptance criteria.
+- Must complete applicable implementation planning and testing.
+- Must monitor performance and usage, with defined thresholds and escalation.
+- Must reassess usage changes before implementation.
+- Must support quarterly inventory/usage and annual governance/control attestations.
+
+**Please independently verify each requirement.**
+
+For each item, explain whether it is:
+
+- Mandatory for all Minimal Risk models.
+- Mandatory only under specified conditions.
+- Recommended but not mandatory.
+- Unsupported or inaccurately stated.
+
+Also verify whether formal validation, ongoing monitoring, and documentation exemptions have been accurately represented.
+
+### 8. Verify what happens when Minimal Risk is not approved
+
+Confirm whether the document correctly describes the alternative MRM process.
+
+Specifically:
+
+- Must the model proceed through standard MRM risk rating and validation/review?
+- Are High, Medium, Low, Very Low, and Minimal the official classification levels?
+- Do all non-Minimal models require formal validation?
+- What determines whether MDR, independent validation, approval, or periodic review is required?
+- Are there any alternative or exception workflows?
+
+### 9. Identify other inaccuracies, omissions, or misleading statements
+
+Review **every section and table across all four pages**, including the Core Artifacts Checklist.
+
+Identify any:
+
+- Incorrect statements.
+- Unsupported assumptions.
+- Missing mandatory steps.
+- Incorrect terminology.
+- Overgeneralized requirements.
+- Important exceptions or conditional requirements.
+- Incorrect sequencing of activities.
+- Missing approvals, compliance obligations, or ongoing monitoring requirements.
+
+Do not limit your review to the issues listed above.
+
+### 10. Provide an evidence-based fact-check report
+
+Please provide a table with the following columns:
+
+| Document section / statement | Verdict | Exact source document | Page / section / slide | Supporting evidence | Required correction |
+|---|---|---|---|---|---|
+
+Use these verdicts:
+
+- **Verified:** Directly supported by the official reference.
+- **Partially correct:** Supported but missing important qualifications.
+- **Incorrect:** Contradicted by the official reference.
+- **Not verified:** No supporting reference could be located.
+
+For each disputed or material statement, include the exact supporting wording from the source where possible, rather than relying only on paraphrasing.
+
+**Important instructions:**
+
+1. Do not assume a statement is correct because it appeared in your previously generated document.
+2. Use the original TD source documents as the authoritative basis.
+3. Do not invent page numbers, quotations, approval authorities, or policy requirements.
+4. If you cannot access a reference document, explicitly identify it and mark the relevant claims as Not verified.
+5. Clearly distinguish formal policy requirements from recommendations or interpretations.
+6. Identify any discrepancies between different TD reference documents, especially where publication dates or policy versions differ.
+7. Do not silently modify the document before reporting your findings.
+
+**At the end, provide:**
+
+1. A list of all required corrections, ranked by importance.
+2. A list of missing steps or obligations that should be added.
+3. An assessment of whether the document is accurate and complete enough to share with management.
+4. A concise recommended final structure for the document, keeping it general rather than project-specific.
+
+For now, **only perform the fact-check and report your findings. Do not generate a revised Word document yet.**
