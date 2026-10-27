@@ -1,1 +1,13 @@
+The latest version looks good. Please make only the following final adjustments, without substantially rewriting or shortening the document:
 
+1. In the Existing Model Version route section, clarify that for an already-registered model with a Pending/undetermined initial risk rating, the appropriate new-versus-existing Minimal Risk submission route must be confirmed with the MG Officer or MRM. Do not present either route as definitive unless the official policy explicitly establishes it.
+
+2. Add short, exact source references (document name and verified page/section/slide) for the key policy-specific requirements, especially Minimal Governance eligibility, MRM approval authority, FBC human-impact confirmation, MIP approval exemption, quarterly/annual attestations, and MRM sample-based QA. Do not invent citations.
+
+3. Retain the distinction between Minimal AI Governance and Minimal Model Risk, including the fact that satisfying one does not replace the other.
+
+4. Improve readability, spacing, and formatting while keeping the document around three pages.
+
+5. Preserve the current general scope. Do not add any SAR Intelligence-specific information.
+
+Please generate the final revised Word document. Do not introduce new policy claims or change any previously verified requirements without identifying the change.
